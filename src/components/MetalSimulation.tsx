@@ -7,11 +7,14 @@ interface Cation {
   id: number;
   baseX: number;
   baseY: number;
+  targetX: number;
+  targetY: number;
   x: number;
   y: number;
   row: number;
   col: number;
   temp: number;
+  isAlloyB: boolean; // true if this is a Metal B atom in an alloy
 }
 
 interface Electron {
@@ -39,6 +42,7 @@ interface Props {
   particleSpawner?: boolean;
   crystalStructure?: 'square' | 'hexagonal' | 'fcc';
   alloyMix?: number;
+  singleLayerMode?: boolean; // Toggle for single vs multi-layer sliding
   onParticleSpawn?: () => void;
   onLayerSlide?: () => void;
 }
@@ -85,6 +89,7 @@ export default function MetalSimulation({
   particleSpawner = false,
   crystalStructure = 'square',
   alloyMix = 0,
+  singleLayerMode = false,
   onParticleSpawn,
   onLayerSlide
 }: Props) {
@@ -97,6 +102,8 @@ export default function MetalSimulation({
   const heatTimeRef = useRef<number>(0);
   const camRef = useRef({ x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, zoom: 1 });
   const electronTrailsRef = useRef<{x: number, y: number}[][]>([]);
+  const lastCrystalStructureRef = useRef<string>('');
+  const animationProgressRef = useRef<number>(1); // For smooth crystal transitions
   
   // Dragging state for malleable mode
   const dragState = useRef({
@@ -129,19 +136,33 @@ export default function MetalSimulation({
       let id = 0;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
+          const baseX = bounds.x + (c + 1) * spacingX;
+          const baseY = bounds.y + (r + 1) * spacingY;
           cations.push({
             id: id++,
-            baseX: bounds.x + (c + 1) * spacingX,
-            baseY: bounds.y + (r + 1) * spacingY,
-            x: bounds.x + (c + 1) * spacingX,
-            y: bounds.y + (r + 1) * spacingY,
+            baseX: baseX,
+            baseY: baseY,
+            targetX: baseX,
+            targetY: baseY,
+            x: baseX,
+            y: baseY,
             row: r,
             col: c,
             temp: 0,
+            isAlloyB: false,
           });
         }
       }
       cationsRef.current = cations;
+
+      // Initialize alloy types based on alloyMix
+      if (alloyMix > 0) {
+        const numAlloyB = Math.floor(cations.length * (alloyMix / 100));
+        const shuffledIndices = [...Array(cations.length).keys()].sort(() => Math.random() - 0.5);
+        for (let i = 0; i < numAlloyB; i++) {
+          cationsRef.current[shuffledIndices[i]].isAlloyB = true;
+        }
+      }
 
       const electrons: Electron[] = [];
       const numElectrons = mode === 'malleable' ? 60 : 150;
@@ -172,7 +193,7 @@ export default function MetalSimulation({
     }
   }, [mode]);
 
-  // Handle crystal structure changes
+  // Handle crystal structure changes with smooth transitions
   useEffect(() => {
     if (cationsRef.current.length === 0) return;
     
@@ -184,29 +205,52 @@ export default function MetalSimulation({
     const spacingX = bounds.w / (cols + 1);
     const spacingY = bounds.h / (rows + 1);
     
-    // Update cation positions based on crystal structure
+    // Trigger animation when crystal structure changes
+    const structureChanged = lastCrystalStructureRef.current !== crystalStructure;
+    if (structureChanged) {
+      lastCrystalStructureRef.current = crystalStructure;
+      animationProgressRef.current = 0; // Start animation
+    }
+    
+    // Update target positions based on crystal structure
     cationsRef.current.forEach((c, i) => {
-      const r = Math.floor(i / cols);
-      const col = i % cols;
+      const r = c.row;
+      const col = c.col;
       
       if (crystalStructure === 'hexagonal') {
-        // Offset every other row
+        // Hexagonal close packing - offset every other row
         const offset = r % 2 === 1 ? spacingX / 2 : 0;
-        c.baseX = bounds.x + (col + 1) * spacingX + offset;
-        c.baseY = bounds.y + (r + 1) * spacingY * 0.866; // Close packing
+        c.targetX = bounds.x + (col + 1) * spacingX + offset;
+        c.targetY = bounds.y + (r + 1) * spacingY * 0.866; // Close packing factor
       } else if (crystalStructure === 'fcc') {
-        // Face-centered cubic arrangement
-        const offsetX = r % 2 === 1 ? spacingX / 2 : 0;
-        const offsetY = col % 2 === 1 ? spacingY / 2 : 0;
-        c.baseX = bounds.x + (Math.floor(col / 2) + 1) * spacingX + offsetX;
-        c.baseY = bounds.y + (r + 1) * spacingY + offsetY;
+        // Face-centered cubic - proper 2D projection
+        // In FCC, atoms are at corners + face centers
+        // For 2D visualization: stagger rows like a distorted square lattice
+        const stagger = (r % 2) * (spacingX * 0.25);
+        const verticalStagger = (col % 2) * (spacingY * 0.25);
+        c.targetX = bounds.x + (col + 1) * spacingX + stagger;
+        c.targetY = bounds.y + (r + 1) * spacingY + verticalStagger;
       } else {
         // Square lattice (default)
-        c.baseX = bounds.x + (col + 1) * spacingX;
-        c.baseY = bounds.y + (r + 1) * spacingY;
+        c.targetX = bounds.x + (col + 1) * spacingX;
+        c.targetY = bounds.y + (r + 1) * spacingY;
       }
     });
-  }, [crystalStructure, mode]);
+    
+    // Handle alloy mix changes - re-randomize alloy atoms
+    if (alloyMix > 0) {
+      const numAlloyB = Math.floor(cationsRef.current.length * (alloyMix / 100));
+      // Reset all first
+      cationsRef.current.forEach(c => c.isAlloyB = false);
+      // Then randomly assign
+      const shuffledIndices = [...Array(cationsRef.current.length).keys()].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < numAlloyB; i++) {
+        cationsRef.current[shuffledIndices[i]].isAlloyB = true;
+      }
+    } else {
+      cationsRef.current.forEach(c => c.isAlloyB = false);
+    }
+  }, [crystalStructure, mode, alloyMix]);
 
   // Handle Recording State Changes
   useEffect(() => {
@@ -319,6 +363,11 @@ export default function MetalSimulation({
       const updatePhysics = (dt: number) => {
         // Update Cations
         cations.forEach(c => {
+          // Smooth interpolation for crystal structure transitions
+          const lerpSpeed = 0.08;
+          c.baseX += (c.targetX - c.baseX) * lerpSpeed;
+          c.baseY += (c.targetY - c.baseY) * lerpSpeed;
+          
           // Vibration amplitude based on temperature (global + local)
           const globalTemp = temperature / 100; // 0-1 from prop
           const amplitude = mode === 'heat' ? 1 + c.temp * 8 : 1.5 + globalTemp * 8;
@@ -524,29 +573,46 @@ export default function MetalSimulation({
 
       // Draw Cations
       cations.forEach(c => {
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, CATION_RADIUS, 0, Math.PI * 2);
+        // Determine cation properties based on alloy type
+        let cationRadius = CATION_RADIUS;
+        let fillColor = '#ef4444'; // red-500 (Metal A)
+        let strokeColor = '#991b1b';
+        let labelText = '+';
         
-        if (c.temp > 0.01) {
+        if (c.isAlloyB) {
+          // Metal B in alloy - show as gold/amber color
+          cationRadius = CATION_RADIUS * 1.15; // Slightly larger
+          if (c.temp > 0.01) {
+            // Interpolate from gold to white based on temp
+            const r = 245;
+            const g = Math.floor(158 + c.temp * 97);
+            const b = Math.floor(58 + c.temp * 197);
+            fillColor = `rgb(${r}, ${g}, ${b})`;
+          } else {
+            fillColor = '#f59e0b'; // amber-500 (Metal B)
+          }
+          strokeColor = '#b45309';
+        } else if (c.temp > 0.01) {
           // Interpolate from red to yellow/white based on temp
           const r = 239;
           const g = Math.floor(68 + c.temp * 180);
           const b = Math.floor(68 + c.temp * 180);
-          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        } else {
-          ctx.fillStyle = '#ef4444'; // red-500
+          fillColor = `rgb(${r}, ${g}, ${b})`;
         }
         
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, cationRadius, 0, Math.PI * 2);
+        ctx.fillStyle = fillColor;
         ctx.fill();
-        ctx.strokeStyle = '#991b1b';
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 2;
         ctx.stroke();
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Inter, sans-serif';
+        ctx.font = `bold ${cationRadius}px Inter, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+', c.x, c.y);
+        ctx.fillText(labelText, c.x, c.y);
       });
 
       // Draw Electrons
@@ -696,9 +762,18 @@ export default function MetalSimulation({
     dragState.current.dragStartX = x;
     
     cationsRef.current.forEach(c => {
-      // Move the clicked row and all rows above it to simulate sliding layers
-      if (c.row <= dragState.current.dragRow) {
-        c.baseX += dx;
+      // Move based on mode: single layer or multi-layer (scientific)
+      if (singleLayerMode) {
+        // Single layer mode: only move the exact row that was clicked
+        if (c.row === dragState.current.dragRow) {
+          c.baseX += dx;
+        }
+      } else {
+        // Multi-layer mode (scientific): move the clicked row and all rows above it
+        // This represents how shear stress causes planes to slide together in real metals
+        if (c.row <= dragState.current.dragRow) {
+          c.baseX += dx;
+        }
       }
     });
   };

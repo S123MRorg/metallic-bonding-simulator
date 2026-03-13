@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
-import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star } from 'lucide-react';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle } from 'lucide-react';
 
 // Types
 interface Achievement {
@@ -121,6 +121,7 @@ export default function App() {
   const [particleSpawner, setParticleSpawner] = useState(false);
   const [crystalStructure, setCrystalStructure] = useState<'square' | 'hexagonal' | 'fcc'>('square');
   const [alloyMix, setAlloyMix] = useState(0); // 0-100 percentage
+  const [singleLayerMode, setSingleLayerMode] = useState(false); // Toggle for malleability
 
   // Quiz state
   const [showQuiz, setShowQuiz] = useState(false);
@@ -408,20 +409,47 @@ export default function App() {
               </button>
 
               {mode === 'malleable' && (
-                <div className="pl-4 pr-2 py-2 flex items-center justify-between bg-slate-800/30 rounded-lg border border-slate-700/30">
-                  <span className="text-sm text-slate-300">Auto-demonstrate</span>
-                  <button
-                    onClick={() => setAutoMalleable(!autoMalleable)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      autoMalleable ? 'bg-emerald-500' : 'bg-slate-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        autoMalleable ? 'translate-x-6' : 'translate-x-1'
+                <div className="space-y-2">
+                  <div className="pl-4 pr-2 py-2 flex items-center justify-between bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <span className="text-sm text-slate-300">Auto-demonstrate</span>
+                    <button
+                      onClick={() => setAutoMalleable(!autoMalleable)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        autoMalleable ? 'bg-emerald-500' : 'bg-slate-600'
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          autoMalleable ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  {/* Single Layer Mode Toggle */}
+                  <div className="pl-4 pr-2 py-2 flex items-center justify-between bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-300">Single Layer Mode</span>
+                      <div className="group relative">
+                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          When enabled, only the dragged layer moves. When disabled (scientific), layers above move together.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSingleLayerMode(!singleLayerMode)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        singleLayerMode ? 'bg-blue-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          singleLayerMode ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -494,7 +522,15 @@ export default function App() {
                 {/* Animation Speed */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-300">Animation Speed</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-300">Animation Speed</span>
+                      <div className="group relative">
+                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Controls how fast delocalized electrons move. In real metals, electrons move at ~1,000,000 m/s (Fermi velocity), represented by 10x speed.
+                        </div>
+                      </div>
+                    </div>
                     <span className="text-xs text-slate-400">{animationSpeed.toFixed(2)}x</span>
                   </div>
                   <input 
@@ -514,10 +550,16 @@ export default function App() {
                 {/* Temperature Control */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-300 flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <Thermometer className="w-4 h-4 text-rose-400" />
-                      Temperature
-                    </span>
+                      <span className="text-sm text-slate-300">Temperature</span>
+                      <div className="group relative">
+                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Higher temperature increases cation vibration amplitude and electron kinetic energy. This demonstrates thermal expansion and heat conduction.
+                        </div>
+                      </div>
+                    </div>
                     <span className="text-xs text-slate-400">{temperature}°C</span>
                   </div>
                   <input 
@@ -535,10 +577,16 @@ export default function App() {
                 {(mode === 'electrical' || mode === 'circuit') && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-300 flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <VoltageIcon className="w-4 h-4 text-amber-400" />
-                        Voltage
-                      </span>
+                        <span className="text-sm text-slate-300">Voltage</span>
+                        <div className="group relative">
+                          <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                          <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            Voltage creates an electric field that applies force on electrons, causing them to drift toward the positive terminal. Higher voltage = stronger force = faster electron flow.
+                          </div>
+                        </div>
+                      </div>
                       <span className="text-xs text-slate-400">{voltage}V</span>
                     </div>
                     <input 
@@ -555,10 +603,16 @@ export default function App() {
 
                 {/* Particle Spawner */}
                 <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-                  <span className="text-sm text-slate-300 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Plus className="w-4 h-4 text-blue-400" />
-                    Particle Spawner
-                  </span>
+                    <span className="text-sm text-slate-300">Particle Spawner</span>
+                    <div className="group relative">
+                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        Enable this and click anywhere on the metal to add more delocalized electrons. Great for exploring electron density effects!
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={() => {
                       setParticleSpawner(!particleSpawner);
@@ -578,10 +632,16 @@ export default function App() {
 
                 {/* Electron Trails */}
                 <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-                  <span className="text-sm text-slate-300 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Eye className="w-4 h-4 text-purple-400" />
-                    Electron Trails
-                  </span>
+                    <span className="text-sm text-slate-300">Electron Trails</span>
+                    <div className="group relative">
+                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        Visualize the paths electrons take as they move through the metal. Shows the random walk motion characteristic of thermal motion.
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={() => {
                       setShowTrails(!showTrails);
@@ -601,10 +661,16 @@ export default function App() {
 
                 {/* Crystal Structure */}
                 <div className="py-2 border-t border-slate-700/50">
-                  <span className="text-sm text-slate-300 flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Grid3X3 className="w-4 h-4 text-emerald-400" />
-                    Crystal Structure
-                  </span>
+                    <span className="text-sm text-slate-300">Crystal Structure</span>
+                    <div className="group relative">
+                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        Square: Simple cubic arrangement | Hexagonal: Close-packed like magnesium | FCC: Face-centered cubic like copper - densest packing!
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     {(['square', 'hexagonal', 'fcc'] as const).map((structure) => (
                       <button
@@ -627,10 +693,16 @@ export default function App() {
 
                 {/* Alloy Creation */}
                 <div className="py-2 border-t border-slate-700/50">
-                  <span className="text-sm text-slate-300 flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Gem className="w-4 h-4 text-amber-400" />
-                    Alloy Mix
-                  </span>
+                    <span className="text-sm text-slate-300">Alloy Mix</span>
+                    <div className="group relative">
+                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        Mix in Metal B atoms (gold) to create an alloy. Alloys have different properties than pure metals - they often have different strength, conductivity, and color!
+                      </div>
+                    </div>
+                  </div>
                   <input 
                     type="range" 
                     min="0" 
@@ -690,6 +762,7 @@ export default function App() {
               isRecording={isRecording}
               animationSpeed={animationSpeed}
               autoMalleable={autoMalleable}
+              singleLayerMode={singleLayerMode}
               onRecordingComplete={handleRecordingComplete}
               onRecordingProgress={setRecordingProgress}
               temperature={temperature}
@@ -708,7 +781,13 @@ export default function App() {
                 <div className="w-4 h-4 rounded-full bg-red-500 border border-red-700 flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
-                <span className="text-slate-300">Metal Cation</span>
+                <span className="text-slate-300">Metal A Cation</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-amber-500 border border-amber-700 flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">+</span>
+                </div>
+                <span className="text-slate-300">Metal B (Alloy)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center">
