@@ -699,6 +699,7 @@ export default function App() {
               crystalStructure={crystalStructure}
               alloyMix={alloyMix}
               onParticleSpawn={() => trackFeature('electron_add')}
+              onLayerSlide={() => trackFeature('layer_slide')}
             />
             
             {/* Legend / Info Overlay */}

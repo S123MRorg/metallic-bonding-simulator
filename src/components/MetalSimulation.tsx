@@ -40,6 +40,7 @@ interface Props {
   crystalStructure?: 'square' | 'hexagonal' | 'fcc';
   alloyMix?: number;
   onParticleSpawn?: () => void;
+  onLayerSlide?: () => void;
 }
 
 const CANVAS_WIDTH = 600;
@@ -84,7 +85,8 @@ export default function MetalSimulation({
   particleSpawner = false,
   crystalStructure = 'square',
   alloyMix = 0,
-  onParticleSpawn
+  onParticleSpawn,
+  onLayerSlide
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
@@ -674,6 +676,10 @@ export default function MetalSimulation({
       dragState.current.isDragging = true;
       dragState.current.dragRow = clickedCation.row;
       dragState.current.dragStartX = x;
+      // Trigger layer slide achievement when user manually drags layers (not in auto mode)
+      if (!autoMalleable) {
+        onLayerSlide?.();
+      }
     }
   };
 
