@@ -1,12 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
-import { Info, Zap, Flame, Move, Play, X, Hexagon } from 'lucide-react';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2 } from 'lucide-react';
 
 export default function App() {
   const [mode, setMode] = useState<SimulationMode>('normal');
   const [showDiy, setShowDiy] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState<number>(0.25);
   const [autoMalleable, setAutoMalleable] = useState(false);
+  
+  // Secret mode state - enabled when user types "secret-git" on the page
+  const [secretModeEnabled, setSecretModeEnabled] = useState(false);
+  const typedCharsRef = useRef<string>('');
+  
+  // Recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingProgress, setRecordingProgress] = useState(0);
+
+  // Handle typing to enable secret mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only track printable characters
+      if (e.key.length === 1) {
+        typedCharsRef.current += e.key;
+        
+        // Keep only the last 20 characters to check for the trigger
+        if (typedCharsRef.current.length > 20) {
+          typedCharsRef.current = typedCharsRef.current.slice(-20);
+        }
+        
+        // Check if typed characters contain "secret-git"
+        if (typedCharsRef.current.toLowerCase().includes('secret-git')) {
+          setSecretModeEnabled(true);
+          typedCharsRef.current = ''; // Reset after successful trigger
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const handleRecordingComplete = (blob: Blob) => {
+    setIsRecording(false);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `metal-simulation-${mode}.gif`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-blue-500/30">
@@ -155,6 +201,35 @@ export default function App() {
               </p>
             </div>
           </div>
+
+          {/* Secret Mode: Export Section - Only visible when user types on the page */}
+          {secretModeEnabled && (
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
+              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Export</h2>
+              <button
+                onClick={() => setIsRecording(true)}
+                disabled={isRecording}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 transition-colors font-medium"
+              >
+                {isRecording ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Recording... {Math.round(recordingProgress * 100)}%
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    {mode === 'heat' ? 'Download Full Tour GIF' : 'Download Animated GIF'}
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                {mode === 'heat' 
+                  ? "Captures the full 24-second guided tour animation." 
+                  : "Captures an 8-second loop of the current simulation mode."}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Main Canvas Area */}
@@ -162,8 +237,11 @@ export default function App() {
           <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden">
             <MetalSimulation 
               mode={mode} 
+              isRecording={isRecording}
               animationSpeed={animationSpeed}
               autoMalleable={autoMalleable}
+              onRecordingComplete={handleRecordingComplete}
+              onRecordingProgress={setRecordingProgress}
             />
             
             {/* Legend / Info Overlay */}

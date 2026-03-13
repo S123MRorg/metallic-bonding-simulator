@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export type SimulationMode = 'normal' | 'malleable' | 'electrical' | 'heat' | 'circuit';
 
@@ -27,12 +28,16 @@ interface Electron {
 
 interface Props {
   mode: SimulationMode;
+  isRecording?: boolean;
   animationSpeed: number;
   autoMalleable?: boolean;
+  onRecordingComplete?: (blob: Blob) => void;
+  onRecordingProgress?: (progress: number) => void;
 }
 
 const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 400;
+const MAX_RECORD_FRAMES = 480; // 240 frames at 30fps = 8 seconds.
 const CATION_RADIUS = 20;
 const ELECTRON_RADIUS = 5;
 const ROWS = 5;
@@ -59,7 +64,7 @@ function getWirePos(progress: number, exitY: number, entryY: number) {
   return { x: 150, y: entryY };
 }
 
-export default function MetalSimulation({ mode, animationSpeed, autoMalleable }: Props) {
+export default function MetalSimulation({ mode, isRecording, animationSpeed, autoMalleable, onRecordingComplete, onRecordingProgress }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
   const electronsRef = useRef<Electron[]>([]);
@@ -74,6 +79,12 @@ export default function MetalSimulation({ mode, animationSpeed, autoMalleable }:
     isDragging: false,
     dragRow: -1,
     dragStartX: 0
+  });
+
+  // GIF Recording state
+  const gifState = useRef({
+    encoder: null as any,
+    frameCount: 0
   });
 
   // Initialize particles
@@ -136,6 +147,27 @@ export default function MetalSimulation({ mode, animationSpeed, autoMalleable }:
       electronsRef.current = electrons;
     }
   }, [mode]);
+
+  // Handle Recording State Changes
+  useEffect(() => {
+    if (isRecording && !gifState.current.encoder) {
+      gifState.current.encoder = GIFEncoder();
+      gifState.current.frameCount = 0;
+      onRecordingProgress?.(0);
+      
+      // Reset heat animation if we are in heat mode to capture the full tour
+      if (mode === 'heat') {
+        heatTimeRef.current = 0;
+        cationsRef.current.forEach(c => c.temp = 0);
+      }
+    } else if (!isRecording && gifState.current.encoder) {
+      gifState.current.encoder.finish();
+      const buffer = gifState.current.encoder.bytesView();
+      const blob = new Blob([buffer], { type: 'image/gif' });
+      onRecordingComplete?.(blob);
+      gifState.current.encoder = null;
+    }
+  }, [isRecording, onRecordingComplete, onRecordingProgress, mode]);
 
   // Main Simulation Loop
   useEffect(() => {
@@ -496,6 +528,31 @@ export default function MetalSimulation({ mode, animationSpeed, autoMalleable }:
         ctx.fillRect(20, CANVAS_HEIGHT - 20, (CANVAS_WIDTH - 40) * progress, 4);
       }
 
+      // Handle GIF Recording
+      if (isRecording && gifState.current.encoder) {
+        // Record every 2nd frame (~30fps) for smoother animation
+        if (gifState.current.frameCount % 2 === 0) {
+          const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          const palette = quantize(imageData.data, 256);
+          const index = applyPalette(imageData.data, palette);
+          gifState.current.encoder.writeFrame(index, CANVAS_WIDTH, CANVAS_HEIGHT, { palette, delay: 33 });
+          
+          const maxRecordFrames = mode === 'heat' ? 1440 : MAX_RECORD_FRAMES; // 24s * 30fps = 720 recorded frames (1440 total frames)
+          const recordedFrames = gifState.current.frameCount / 2;
+          onRecordingProgress?.(recordedFrames / (maxRecordFrames / 2));
+          
+          if (gifState.current.frameCount >= maxRecordFrames) {
+            // Auto-stop
+            gifState.current.encoder.finish();
+            const buffer = gifState.current.encoder.bytesView();
+            const blob = new Blob([buffer], { type: 'image/gif' });
+            onRecordingComplete?.(blob);
+            gifState.current.encoder = null;
+          }
+        }
+        gifState.current.frameCount++;
+      }
+
       requestRef.current = requestAnimationFrame(render);
     };
 
@@ -503,7 +560,7 @@ export default function MetalSimulation({ mode, animationSpeed, autoMalleable }:
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [mode, animationSpeed, autoMalleable]);
+  }, [mode, isRecording, animationSpeed, autoMalleable, onRecordingComplete, onRecordingProgress]);
 
   // Mouse Interaction for Malleable Mode
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
