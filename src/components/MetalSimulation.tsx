@@ -33,6 +33,13 @@ interface Props {
   autoMalleable?: boolean;
   onRecordingComplete?: (blob: Blob) => void;
   onRecordingProgress?: (progress: number) => void;
+  temperature?: number;
+  voltage?: number;
+  showTrails?: boolean;
+  particleSpawner?: boolean;
+  crystalStructure?: 'square' | 'hexagonal' | 'fcc';
+  alloyMix?: number;
+  onParticleSpawn?: () => void;
 }
 
 const CANVAS_WIDTH = 600;
@@ -64,7 +71,21 @@ function getWirePos(progress: number, exitY: number, entryY: number) {
   return { x: 150, y: entryY };
 }
 
-export default function MetalSimulation({ mode, isRecording, animationSpeed, autoMalleable, onRecordingComplete, onRecordingProgress }: Props) {
+export default function MetalSimulation({ 
+  mode, 
+  isRecording, 
+  animationSpeed, 
+  autoMalleable, 
+  onRecordingComplete, 
+  onRecordingProgress,
+  temperature = 0,
+  voltage = 50,
+  showTrails = false,
+  particleSpawner = false,
+  crystalStructure = 'square',
+  alloyMix = 0,
+  onParticleSpawn
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
   const electronsRef = useRef<Electron[]>([]);
@@ -73,6 +94,7 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
   const autoMalleableTime = useRef<number>(0);
   const heatTimeRef = useRef<number>(0);
   const camRef = useRef({ x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, zoom: 1 });
+  const electronTrailsRef = useRef<{x: number, y: number}[][]>([]);
   
   // Dragging state for malleable mode
   const dragState = useRef({
@@ -147,6 +169,42 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
       electronsRef.current = electrons;
     }
   }, [mode]);
+
+  // Handle crystal structure changes
+  useEffect(() => {
+    if (cationsRef.current.length === 0) return;
+    
+    const isCircuit = mode === 'circuit';
+    const bounds = isCircuit ? { x: 150, y: 100, w: 300, h: 150 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+    const rows = isCircuit ? 3 : ROWS;
+    const cols = isCircuit ? 6 : COLS;
+    
+    const spacingX = bounds.w / (cols + 1);
+    const spacingY = bounds.h / (rows + 1);
+    
+    // Update cation positions based on crystal structure
+    cationsRef.current.forEach((c, i) => {
+      const r = Math.floor(i / cols);
+      const col = i % cols;
+      
+      if (crystalStructure === 'hexagonal') {
+        // Offset every other row
+        const offset = r % 2 === 1 ? spacingX / 2 : 0;
+        c.baseX = bounds.x + (col + 1) * spacingX + offset;
+        c.baseY = bounds.y + (r + 1) * spacingY * 0.866; // Close packing
+      } else if (crystalStructure === 'fcc') {
+        // Face-centered cubic arrangement
+        const offsetX = r % 2 === 1 ? spacingX / 2 : 0;
+        const offsetY = col % 2 === 1 ? spacingY / 2 : 0;
+        c.baseX = bounds.x + (Math.floor(col / 2) + 1) * spacingX + offsetX;
+        c.baseY = bounds.y + (r + 1) * spacingY + offsetY;
+      } else {
+        // Square lattice (default)
+        c.baseX = bounds.x + (col + 1) * spacingX;
+        c.baseY = bounds.y + (r + 1) * spacingY;
+      }
+    });
+  }, [crystalStructure, mode]);
 
   // Handle Recording State Changes
   useEffect(() => {
@@ -259,8 +317,9 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
       const updatePhysics = (dt: number) => {
         // Update Cations
         cations.forEach(c => {
-          // Vibration amplitude based on temperature
-          const amplitude = mode === 'heat' ? 1 + c.temp * 8 : 1.5;
+          // Vibration amplitude based on temperature (global + local)
+          const globalTemp = temperature / 100; // 0-1 from prop
+          const amplitude = mode === 'heat' ? 1 + c.temp * 8 : 1.5 + globalTemp * 8;
           
           // Return to base position slightly if not dragged
           c.x = c.baseX + (Math.random() - 0.5) * amplitude * Math.min(dt, 5);
@@ -317,9 +376,10 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
           }
 
           if (mode === 'electrical' || mode === 'circuit') {
-            // Apply electric field (force to the right)
-            e.vx += 0.5 * dt;
-            if (e.vx > 8) e.vx = 8; // Terminal velocity
+            // Apply electric field (force to the right) - voltage affects acceleration
+            const voltageMultiplier = voltage / 50; // 0-2 range
+            e.vx += 0.5 * dt * voltageMultiplier;
+            if (e.vx > 8 * voltageMultiplier) e.vx = 8 * voltageMultiplier; // Terminal velocity
             e.vy += (Math.random() - 0.5) * 1 * dt; // Some random vertical movement
             
             // Dampen vertical velocity
@@ -488,8 +548,42 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
       });
 
       // Draw Electrons
+      // Initialize trails if needed
+      if (showTrails && electronTrailsRef.current.length !== electrons.length) {
+        electronTrailsRef.current = electrons.map(() => []);
+      }
+      
+      // Update and draw trails
+      if (showTrails) {
+        electrons.forEach((e, i) => {
+          if (e.state === 'metal') {
+            if (!electronTrailsRef.current[i]) electronTrailsRef.current[i] = [];
+            electronTrailsRef.current[i].push({ x: e.x, y: e.y });
+            if (electronTrailsRef.current[i].length > 15) {
+              electronTrailsRef.current[i].shift();
+            }
+            
+            // Draw trail
+            const trail = electronTrailsRef.current[i];
+            if (trail.length > 1) {
+              ctx.beginPath();
+              ctx.moveTo(trail[0].x, trail[0].y);
+              for (let j = 1; j < trail.length; j++) {
+                ctx.lineTo(trail[j].x, trail[j].y);
+              }
+              ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+          }
+        });
+      } else {
+        // Clear trails when disabled
+        electronTrailsRef.current = [];
+      }
+      
       ctx.fillStyle = '#60a5fa'; // blue-400
-      electrons.forEach(e => {
+      electrons.forEach((e, i) => {
         ctx.beginPath();
         ctx.arc(e.x, e.y, ELECTRON_RADIUS, 0, Math.PI * 2);
         ctx.fill();
@@ -608,16 +702,54 @@ export default function MetalSimulation({ mode, isRecording, animationSpeed, aut
     dragState.current.dragRow = -1;
   };
 
+  // Handle click for particle spawner
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!particleSpawner) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    // Adjust for camera zoom and pan
+    const adjustedX = (x - CANVAS_WIDTH / 2) / camRef.current.zoom + camRef.current.x;
+    const adjustedY = (y - CANVAS_HEIGHT / 2) / camRef.current.zoom + camRef.current.y;
+    
+    // Add new electron at click position
+    electronsRef.current.push({
+      x: adjustedX,
+      y: adjustedY,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      speedMultiplier: 1,
+      state: 'metal',
+    });
+    
+    // Initialize trail for new electron if trails are enabled
+    if (showTrails) {
+      electronTrailsRef.current.push([]);
+    }
+    
+    // Notify parent component
+    onParticleSpawn?.();
+  };
+
   return (
     <canvas
       ref={canvasRef}
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
-      className={`w-full max-w-full rounded-xl shadow-lg border border-slate-700 ${mode === 'malleable' && !autoMalleable ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      className={`w-full max-w-full rounded-xl shadow-lg border border-slate-700 ${mode === 'malleable' && !autoMalleable ? 'cursor-grab active:cursor-grabbing' : ''} ${particleSpawner ? 'cursor-crosshair' : ''}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onClick={handleCanvasClick}
       onTouchStart={(e) => {
         const touch = e.touches[0];
         handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY } as any);
