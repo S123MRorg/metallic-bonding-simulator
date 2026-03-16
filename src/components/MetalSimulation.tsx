@@ -654,13 +654,16 @@ export default function MetalSimulation({
         electronTrailsRef.current = [];
       }
       
-      ctx.fillStyle = '#60a5fa'; // blue-400
+      // Draw electrons
       electrons.forEach((e, i) => {
         ctx.beginPath();
         ctx.arc(e.x, e.y, ELECTRON_RADIUS, 0, Math.PI * 2);
+        // Use darker blue for light theme visibility
+        ctx.fillStyle = isLight ? '#1d4ed8' : '#60a5fa';
         ctx.fill();
         
-        ctx.fillStyle = '#ffffff';
+        // Use darker color for light theme visibility
+        ctx.fillStyle = isLight ? '#1e3a8a' : '#ffffff';
         ctx.font = '10px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

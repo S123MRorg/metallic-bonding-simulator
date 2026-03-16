@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
 import { useTheme } from './hooks/useTheme';
-import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Maximize2, Minimize2, Sun, Moon, Bell, BellOff, XCircle, AlertCircle } from 'lucide-react';
 
 // Types
 interface Achievement {
@@ -134,6 +134,7 @@ export default function App() {
   const [showQuizResult, setShowQuizResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [quizCategory, setQuizCategory] = useState('all');
 
   // Achievement state
   const [achievements, setAchievements] = useState<Achievement[]>(defaultAchievements);
@@ -144,6 +145,12 @@ export default function App() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [challenges, setChallenges] = useState<Challenge[]>(defaultChallenges);
   const [challengeTimer, setChallengeTimer] = useState(0);
+  const [newChallenge, setNewChallenge] = useState<Challenge | null>(null);
+
+  // Unified notification state
+  const [notifications, setNotifications] = useState<{id: string; type: 'achievement' | 'challenge'; message: string; icon: string}[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [dismissedNotifications, setDismissedNotifications] = useState<Set<string>>(new Set());
 
   // Challenge progress updates (called from simulation)
   const [challengeProgress, setChallengeProgress] = useState({ brightest: 0, heat: 0, flow: 0, slide: 0 });
@@ -377,30 +384,17 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Theme Toggle Button - Square Box Design */}
+            {/* Theme Toggle Button - Sun/Moon Icons */}
             <button
               onClick={toggleTheme}
-              className={`relative flex items-center h-8 px-1 rounded-lg ${bgSecondary} ${borderColor} border transition-colors`}
+              className={`relative flex items-center justify-center w-10 h-10 rounded-xl ${bgSecondary} ${borderColor} border transition-all hover:scale-110 active:scale-95`}
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              <div className="relative flex items-center gap-1">
-                {/* Light mode square indicator */}
-                <div 
-                  className={`w-4 h-4 rounded-sm transition-all duration-200 ${
-                    theme === 'light' 
-                      ? 'bg-white border-2 border-slate-600 shadow-sm' 
-                      : 'bg-slate-200 border border-slate-300'
-                  }`}
-                />
-                {/* Dark mode square indicator */}
-                <div 
-                  className={`w-4 h-4 rounded-sm transition-all duration-200 ${
-                    theme === 'dark' 
-                      ? 'bg-slate-800 border-2 border-slate-400 shadow-sm' 
-                      : 'bg-slate-600 border border-slate-700'
-                  }`}
-                />
-              </div>
+              {isDark ? (
+                <Moon className="w-5 h-5 text-slate-300" />
+              ) : (
+                <Sun className="w-5 h-5 text-amber-500" />
+              )}
             </button>
             {/* Achievement Button */}
             <button
@@ -576,7 +570,7 @@ export default function App() {
           <div className={`${bgCard} border ${borderColor}/50 rounded-2xl overflow-visible transition-all duration-300`}>
             <button
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`w-full flex items-center justify-between p-6 ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors`}
+              className={`w-full flex items-center justify-between p-6 ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors rounded-t-2xl`}
             >
               <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider flex items-center gap-2`}>
                 <Settings className="w-4 h-4" />
@@ -798,12 +792,12 @@ export default function App() {
 
           {/* Secret Mode: Export Section */}
           {secretModeEnabled && (
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Export</h2>
+            <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-6`}>
+              <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider mb-4`}>Export</h2>
               <button
                 onClick={() => setIsRecording(true)}
                 disabled={isRecording}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 transition-colors font-medium"
+                className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl ${isDark ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-violet-600 hover:bg-violet-500'} ${isDark ? 'disabled:bg-slate-700 disabled:text-slate-400' : 'disabled:bg-slate-300 disabled:text-slate-500'} transition-colors font-medium text-white`}
               >
                 {isRecording ? (
                   <>
@@ -817,7 +811,7 @@ export default function App() {
                   </>
                 )}
               </button>
-              <p className="text-xs text-slate-500 mt-3 text-center">
+              <p className={`text-xs ${textMuted} mt-3 text-center`}>
                 {mode === 'heat' 
                   ? "Captures the full 24-second guided tour animation." 
                   : "Captures an 8-second loop of the current simulation mode."}
@@ -826,17 +820,25 @@ export default function App() {
           )}
         </div>
 
-        {/* Main Canvas Area */}
-        <div className="lg:flex-1 flex flex-col">
+        {/* Main Canvas Area - Fullscreen Wrapper */}
+        <div 
+          ref={simulationContainerRef}
+          className={`lg:flex-1 flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 overflow-auto' : ''} ${isFullscreen ? (isDark ? 'bg-slate-900' : 'bg-slate-50') : ''}`}
+        >
           {/* Quick Controls Bar - Animation Speed, Temperature, Electron Trails */}
           <div 
-            ref={simulationContainerRef}
-            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'fixed inset-0 z-50 rounded-none overflow-auto' : ''} ${isFullscreen ? (isDark ? 'bg-slate-900' : 'bg-slate-50') : ''}`}
+            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4`}
           >
             <div className="flex flex-wrap items-center gap-6">
               {/* Animation Speed */}
               <div className="flex items-center gap-2 flex-1 min-w-[140px]">
                 <span className={`text-xs ${textMuted} whitespace-nowrap`}>Speed</span>
+                <div className="group relative">
+                  <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                  <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                    Controls how fast electrons move. Real metals: ~1,000,000 m/s!
+                  </div>
+                </div>
                 <input 
                   type="range" 
                   min="0.01" 
@@ -853,6 +855,12 @@ export default function App() {
               <div className="flex items-center gap-2 flex-1 min-w-[140px]">
                 <Thermometer className={`w-4 h-4 ${isDark ? 'text-rose-400' : 'text-rose-500'}`} />
                 <span className={`text-xs ${textMuted} whitespace-nowrap`}>Temp</span>
+                <div className="group relative">
+                  <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                  <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                    Higher temperature = more vibration. Real metals conduct heat via electron movement!
+                  </div>
+                </div>
                 <input 
                   type="range" 
                   min="0" 
@@ -869,6 +877,12 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
                 <span className={`text-xs ${textMuted}`}>Trails</span>
+                <div className="group relative">
+                  <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                  <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                    Shows electron paths as they move randomly through the metal lattice.
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     setShowTrails(!showTrails);
@@ -888,7 +902,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden`}>
+          {/* Simulation Canvas */}
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden mt-4`}>
             {/* Fullscreen Toggle Button */}
             <button
               onClick={toggleFullscreen}
@@ -983,9 +998,9 @@ export default function App() {
                 <div className="text-6xl mb-4">🎉</div>
                 <h3 className={`text-2xl font-bold ${textPrimary} mb-2`}>Quiz Complete!</h3>
                 <p className={`${textMuted} mb-4`}>
-                  You scored <span className="text-emerald-400 font-bold">{quizScore}</span> out of <span className="font-bold">{quizQuestions.length}</span>
+                  You scored <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'} font-bold>{quizScore}</span> out of <span className="font-bold">{quizQuestions.length}</span>
                 </p>
-                <p className={`${isDark ? 'text-slate-500' : 'text-slate-500'} mb-6`}>
+                <p className={`${textMuted} mb-6`}>
                   {quizScore === quizQuestions.length 
                     ? "Perfect score! You're a metallic bonding expert! 🧙‍♂️"
                     : quizScore >= quizQuestions.length * 0.7 
@@ -994,7 +1009,7 @@ export default function App() {
                 </p>
                 <button
                   onClick={handleRestartQuiz}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium transition-colors"
+                  className={`px-6 py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} rounded-xl font-medium transition-colors`}
                 >
                   Try Again
                 </button>
@@ -1014,7 +1029,7 @@ export default function App() {
                   />
                 </div>
 
-                <h3 className="text-lg font-medium text-white mb-4">
+                <h3 className={`text-lg font-medium ${textPrimary} mb-4`}>
                   {quizQuestions[currentQuestion].question}
                 </h3>
 
@@ -1033,7 +1048,7 @@ export default function App() {
                             : 'bg-purple-500/20 border-purple-500 text-purple-400'
                           : showExplanation && index === quizQuestions[currentQuestion].correct
                           ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                          : 'bg-slate-800 border-slate-700 hover:border-slate-600 text-slate-300'
+                          : `${isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 hover:border-slate-400 text-slate-700'}`
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -1044,7 +1059,7 @@ export default function App() {
                                 ? 'border-emerald-500 bg-emerald-500'
                                 : 'border-red-500 bg-red-500'
                               : 'border-purple-500 bg-purple-500'
-                            : 'border-slate-600'
+                            : isDark ? 'border-slate-600' : 'border-slate-400'
                         }`}>
                           {showExplanation && index === quizQuestions[currentQuestion].correct && <Check className="w-4 h-4" />}
                           {showExplanation && selectedAnswer === index && index !== quizQuestions[currentQuestion].correct && <X className="w-4 h-4" />}
@@ -1056,8 +1071,8 @@ export default function App() {
                 </div>
 
                 {showExplanation && (
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4">
-                    <p className="text-slate-300 text-sm">
+                  <div className={`border rounded-xl p-4 mb-4 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
+                    <p className={textSecondary}>
                       <span className="text-purple-400 font-medium">Explanation: </span>
                       {quizQuestions[currentQuestion].explanation}
                     </p>
@@ -1068,14 +1083,14 @@ export default function App() {
                   <button
                     onClick={handleCheckAnswer}
                     disabled={selectedAnswer === null}
-                    className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-xl font-medium transition-colors"
+                    className={`w-full py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} ${isDark ? 'disabled:bg-slate-700 disabled:text-slate-500' : 'disabled:bg-slate-300 disabled:text-slate-500'} rounded-xl font-medium transition-colors`}
                   >
                     Check Answer
                   </button>
                 ) : (
                   <button
                     onClick={handleNextQuestion}
-                    className="w-full py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium transition-colors"
+                    className={`w-full py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} rounded-xl font-medium transition-colors`}
                   >
                     {currentQuestion < quizQuestions.length - 1 ? 'Next Question' : 'See Results'}
                   </button>
@@ -1218,27 +1233,59 @@ export default function App() {
                 <h3 className={`${textPrimary} font-medium mb-3`}>Materials Needed:</h3>
                 <ul className={`list-disc pl-5 space-y-2 ${textMuted}`}>
                   <li>A clear plastic box or shallow tray (like a Tupperware container)</li>
-                  <li>Large, identical spherical objects to represent <strong>cations</strong> (e.g., ping pong balls, marbles, or large beads)</li>
-                  <li>Small, highly mobile objects to represent <strong>delocalized electrons</strong> (e.g., small seed beads, BB pellets, or even coarse sand)</li>
+                  <li>Large, identical spherical objects to represent <strong className={textSecondary}>cations</strong> (e.g., ping pong balls, marbles, or large beads)</li>
+                  <li>Small, highly mobile objects to represent <strong className={textSecondary}>delocalized electrons</strong> (e.g., small seed beads, BB pellets, or even coarse sand)</li>
+                  <li>Optional: Different colored balls to represent alloy atoms</li>
+                  <li>Optional: A small fan or hairdryer (for demonstrating conductivity)</li>
                 </ul>
               </div>
 
               <div>
-                <h3 className={`${textPrimary} font-medium mb-3`}>How to Build & Demonstrate:</h3>
+                <h3 className={`${textPrimary} font-medium mb-3`}>Step-by-Step Instructions:</h3>
                 <ol className={`list-decimal pl-5 space-y-4 ${textMuted}`}>
                   <li>
-                    <strong className={textSecondary}>Setup:</strong> Place the large balls (cations) into the clear container so they form a neat, packed layer (a lattice). Pour the small beads (electrons) over them so they fill the gaps.
+                    <strong className={textSecondary}>Prepare the Container:</strong> Clean and dry your clear plastic container. A rectangular shape works best for demonstrating conductivity.
                   </li>
                   <li>
-                    <strong className={textSecondary}>Normal State:</strong> Gently shake the container. Notice how the large balls vibrate slightly in place, while the small beads move freely around and between them.
+                    <strong className={textSecondary}>Create the Lattice:</strong> Place the large balls (cations) into the container. Try to arrange them in a neat, packed layer. This represents the crystal lattice structure of a metal. For a more realistic model, use multiple layers.
                   </li>
                   <li>
-                    <strong className={textSecondary}>Malleability:</strong> Use a ruler or your hand to push one row of the large balls. Watch how the row slides over the adjacent row, but the small beads immediately flow into the new gaps, keeping the structure "glued" together.
+                    <strong className={textSecondary}>Add Electrons:</strong> Pour the small beads (electrons) over the cations. They should fill the gaps between the larger balls, representing the "sea of electrons."
                   </li>
                   <li>
-                    <strong className={textSecondary}>Conductivity:</strong> Tilt the container slightly. The large balls will mostly stay in their lattice (if packed tightly), but the small beads will rapidly flow to one side, demonstrating how electrons carry a current or heat.
+                    <strong className={textSecondary}>Demonstrate Normal State:</strong> Gently shake the container. Notice how the large balls vibrate slightly in place (representing thermal vibration), while the small beads move freely around and between them. This demonstrates the mobile nature of delocalized electrons.
+                  </li>
+                  <li>
+                    <strong className={textSecondary}>Demonstrate Malleability:</strong> Use a ruler or your finger to push one row of the large balls. Watch how the row slides over the adjacent row. Notice how the small beads immediately flow into the new gaps, keeping the structure "glued" together. This demonstrates why metals are malleable and ductile!
+                  </li>
+                  <li>
+                    <strong className={textSecondary}>Demonstrate Electrical Conductivity:</strong> Tilt the container slightly. The large balls will mostly stay in their lattice positions (if packed tightly), but the small beads will rapidly flow to one side. This demonstrates how electrons can carry electrical current when a voltage is applied.
+                  </li>
+                  <li>
+                    <strong className={textSecondary}>Demonstrate Thermal Conductivity (Advanced):</strong> Use a small fan or hairdryer to blow on one corner of your model. The small beads near the heat source will move faster and eventually transfer energy throughout the container - just like heat conduction in metals!
+                  </li>
+                  <li>
+                    <strong className={textSecondary}>Create an Alloy:</strong> Add a few differently colored balls (representing Metal B atoms) to your lattice. Mix them in and observe how the structure still holds together. This demonstrates how alloys work!
                   </li>
                 </ol>
+              </div>
+
+              <div>
+                <h3 className={`${textPrimary} font-medium mb-3`}>Tips for Success:</h3>
+                <ul className={`list-disc pl-5 space-y-2 ${textMuted}`}>
+                  <li>Use ping pong balls for cations - they're lightweight and easy to work with</li>
+                  <li>Small beads (like craft beads or sand) work well for electrons</li>
+                  <li>Make sure your container is level for the best demonstration</li>
+                  <li>Use differently colored balls for Metal A and Metal B to clearly show alloys</li>
+                  <li>Practice the demonstrations a few times before presenting</li>
+                </ul>
+              </div>
+
+              <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-900/30 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+                <h4 className={`font-medium ${textPrimary} mb-2`}>🔬 Science Connection</h4>
+                <p className={`text-sm ${textMuted}`}>
+                  This physical model demonstrates key concepts of the "sea of electrons" model: (1) positive ions in a lattice, (2) mobile electrons that can flow, (3) how electrons act as a "glue" allowing layers to slide, and (4) how electrons can transfer both charge (electricity) and energy (heat) through the metal.
+                </p>
               </div>
             </div>
           </div>
