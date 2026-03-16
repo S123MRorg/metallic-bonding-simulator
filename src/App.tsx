@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
 import { useTheme } from './hooks/useTheme';
-import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Sun, Moon, Maximize2, Minimize2 } from 'lucide-react';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';
 
 // Types
 interface Achievement {
@@ -125,6 +125,7 @@ export default function App() {
   const [alloyMix, setAlloyMix] = useState(0); // 0-100 percentage
   const [singleLayerMode, setSingleLayerMode] = useState(false); // Toggle for malleability
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const simulationContainerRef = useRef<HTMLDivElement>(null);
 
   // Quiz state
   const [showQuiz, setShowQuiz] = useState(false);
@@ -246,11 +247,13 @@ export default function App() {
     setShowExplanation(false);
   };
 
-  // Toggle fullscreen
+  // Toggle fullscreen for simulation container only
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
+      if (simulationContainerRef.current) {
+        simulationContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
     } else {
       document.exitFullscreen();
       setIsFullscreen(false);
@@ -374,18 +377,35 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Theme Toggle Button */}
+            {/* Theme Toggle Button - Square Box Design */}
             <button
               onClick={toggleTheme}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+              className={`relative flex items-center h-8 px-1 rounded-lg ${bgSecondary} ${borderColor} border transition-colors`}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-purple-500" />}
-              <span className="hidden sm:inline">{isDark ? 'Light' : 'Dark'}</span>
+              <div className="relative flex items-center gap-1">
+                {/* Light mode square indicator */}
+                <div 
+                  className={`w-4 h-4 rounded-sm transition-all duration-200 ${
+                    theme === 'light' 
+                      ? 'bg-white border-2 border-slate-600 shadow-sm' 
+                      : 'bg-slate-200 border border-slate-300'
+                  }`}
+                />
+                {/* Dark mode square indicator */}
+                <div 
+                  className={`w-4 h-4 rounded-sm transition-all duration-200 ${
+                    theme === 'dark' 
+                      ? 'bg-slate-800 border-2 border-slate-400 shadow-sm' 
+                      : 'bg-slate-600 border border-slate-700'
+                  }`}
+                />
+              </div>
             </button>
             {/* Achievement Button */}
             <button
               onClick={() => setShowAchievements(true)}
-              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors text-sm font-medium ${isDark ? 'border-slate-700' : 'border-slate-200'} border`}
             >
               <Trophy className="w-4 h-4 text-amber-400" />
               <span className="hidden sm:inline">{unlockedCount}/{achievements.length}</span>
@@ -393,7 +413,7 @@ export default function App() {
             {/* Challenge Button */}
             <button
               onClick={() => setShowChallenges(true)}
-              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors text-sm font-medium ${isDark ? 'border-slate-700' : 'border-slate-200'} border`}
             >
               <Target className="w-4 h-4 text-emerald-400" />
               <span className="hidden sm:inline">Challenges</span>
@@ -406,7 +426,7 @@ export default function App() {
             {/* Quiz Button */}
             <button
               onClick={() => setShowQuiz(true)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors text-sm font-medium ${isDark ? 'border-slate-700' : 'border-slate-200'} border`}
             >
               <Star className="w-4 h-4 text-purple-400" />
               <span className="hidden sm:inline">Quiz</span>
@@ -414,7 +434,7 @@ export default function App() {
             {/* DIY Button */}
             <button
               onClick={() => setShowDiy(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${bgSecondary} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors text-sm font-medium ${isDark ? 'border-slate-700' : 'border-slate-200'} border`}
             >
               <Info className="w-4 h-4" />
               <span className="hidden sm:inline">DIY Model</span>
@@ -435,7 +455,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'normal' 
                     ? 'bg-blue-500/10 border-blue-500/50 text-blue-400' 
-                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
+                    : `${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${textSecondary}`
                 } border`}
               >
                 <Play className="w-5 h-5" />
@@ -450,7 +470,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'malleable' 
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
+                    : `${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${textSecondary}`
                 } border`}
               >
                 <Move className="w-5 h-5" />
@@ -510,7 +530,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'electrical' 
                     ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' 
-                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
+                    : `${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${textSecondary}`
                 } border`}
               >
                 <Zap className="w-5 h-5" />
@@ -525,7 +545,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'circuit' 
                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' 
-                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
+                    : `${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${textSecondary}`
                 } border`}
               >
                 <Zap className="w-5 h-5" />
@@ -540,7 +560,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'heat' 
                     ? 'bg-rose-500/10 border-rose-500/50 text-rose-400' 
-                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
+                    : `${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${textSecondary}`
                 } border`}
               >
                 <Flame className="w-5 h-5" />
@@ -556,7 +576,7 @@ export default function App() {
           <div className={`${bgCard} border ${borderColor}/50 rounded-2xl overflow-visible transition-all duration-300`}>
             <button
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`w-full flex items-center justify-between p-6 hover:${bgCardHover} transition-colors`}
+              className={`w-full flex items-center justify-between p-6 ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors`}
             >
               <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider flex items-center gap-2`}>
                 <Settings className="w-4 h-4" />
@@ -603,11 +623,11 @@ export default function App() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Thermometer className="w-4 h-4 text-rose-400" />
+                      <Thermometer className={`w-4 h-4 ${isDark ? 'text-rose-400' : 'text-rose-500'}`} />
                       <span className={`text-sm ${textSecondary}`}>Temperature</span>
                       <div className="group relative">
                         <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50`}>
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                           Higher temperature increases cation vibration amplitude and electron kinetic energy. This demonstrates thermal expansion and heat conduction.
                         </div>
                       </div>
@@ -630,16 +650,16 @@ export default function App() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <VoltageIcon className="w-4 h-4 text-amber-400" />
-                        <span className="text-sm text-slate-300">Voltage</span>
+                        <VoltageIcon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                        <span className={`text-sm ${textSecondary}`}>Voltage</span>
                         <div className="group relative">
-                          <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                          <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                          <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                             Voltage creates an electric field that applies force on electrons, causing them to drift toward the positive terminal. Higher voltage = stronger force = faster electron flow.
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400">{voltage}V</span>
+                      <span className={`text-xs ${textMuted}`}>{voltage}V</span>
                     </div>
                     <input 
                       type="range" 
@@ -654,13 +674,13 @@ export default function App() {
                 )}
 
                 {/* Particle Spawner */}
-                <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
+                <div className={`flex items-center justify-between py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm text-slate-300">Particle Spawner</span>
+                    <Plus className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+                    <span className={`text-sm ${textSecondary}`}>Particle Spawner</span>
                     <div className="group relative">
-                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                         Enable this and click anywhere on the metal to add more delocalized electrons. Great for exploring electron density effects!
                       </div>
                     </div>
@@ -671,7 +691,7 @@ export default function App() {
                       trackFeature('particle_spawn');
                     }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      particleSpawner ? 'bg-blue-500' : 'bg-slate-600'
+                      particleSpawner ? 'bg-blue-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                     }`}
                   >
                     <span
@@ -683,13 +703,13 @@ export default function App() {
                 </div>
 
                 {/* Electron Trails */}
-                <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
+                <div className={`flex items-center justify-between py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-slate-300">Electron Trails</span>
+                    <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                    <span className={`text-sm ${textSecondary}`}>Electron Trails</span>
                     <div className="group relative">
-                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                         Visualize the paths electrons take as they move through the metal. Shows the random walk motion characteristic of thermal motion.
                       </div>
                     </div>
@@ -700,7 +720,7 @@ export default function App() {
                       if (!showTrails) trackFeature('trail_enable');
                     }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      showTrails ? 'bg-purple-500' : 'bg-slate-600'
+                      showTrails ? 'bg-purple-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                     }`}
                   >
                     <span
@@ -712,13 +732,13 @@ export default function App() {
                 </div>
 
                 {/* Crystal Structure */}
-                <div className="py-2 border-t border-slate-700/50">
+                <div className={`py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Grid3X3 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm text-slate-300">Crystal Structure</span>
+                    <Grid3X3 className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                    <span className={`text-sm ${textSecondary}`}>Crystal Structure</span>
                     <div className="group relative">
-                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                         Square: Simple cubic arrangement | Hexagonal: Close-packed like magnesium | FCC: Face-centered cubic like copper - densest packing!
                       </div>
                     </div>
@@ -734,7 +754,7 @@ export default function App() {
                         className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                           crystalStructure === structure
                             ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
+                            : `${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} ${isDark ? 'text-slate-400' : 'text-slate-600'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`
                         } border`}
                       >
                         {structure === 'fcc' ? 'FCC' : structure.charAt(0).toUpperCase() + structure.slice(1)}
@@ -744,13 +764,13 @@ export default function App() {
                 </div>
 
                 {/* Alloy Creation */}
-                <div className="py-2 border-t border-slate-700/50">
+                <div className={`py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Gem className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm text-slate-300">Alloy Mix</span>
+                    <Gem className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                    <span className={`text-sm ${textSecondary}`}>Alloy Mix</span>
                     <div className="group relative">
-                      <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                         Mix in Metal B atoms (gold) to create an alloy. Alloys have different properties than pure metals - they often have different strength, conductivity, and color!
                       </div>
                     </div>
@@ -767,7 +787,7 @@ export default function App() {
                     }}
                     className="w-full accent-amber-500"
                   />
-                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                  <div className={`flex justify-between text-xs ${textMuted} mt-1`}>
                     <span>Pure Metal A</span>
                     <span>{alloyMix}% Metal B</span>
                   </div>
@@ -808,11 +828,71 @@ export default function App() {
 
         {/* Main Canvas Area */}
         <div className="lg:flex-1 flex flex-col">
-          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+          {/* Quick Controls Bar - Animation Speed, Temperature, Electron Trails */}
+          <div 
+            ref={simulationContainerRef}
+            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'fixed inset-0 z-50 rounded-none overflow-auto' : ''} ${isFullscreen ? (isDark ? 'bg-slate-900' : 'bg-slate-50') : ''}`}
+          >
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Animation Speed */}
+              <div className="flex items-center gap-2 flex-1 min-w-[140px]">
+                <span className={`text-xs ${textMuted} whitespace-nowrap`}>Speed</span>
+                <input 
+                  type="range" 
+                  min="0.01" 
+                  max="10" 
+                  step="0.01"
+                  value={animationSpeed} 
+                  onChange={(e) => setAnimationSpeed(Number(e.target.value))}
+                  className="flex-1 h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <span className={`text-xs ${textMuted} w-10 text-right`}>{animationSpeed.toFixed(1)}x</span>
+              </div>
+
+              {/* Temperature */}
+              <div className="flex items-center gap-2 flex-1 min-w-[140px]">
+                <Thermometer className={`w-4 h-4 ${isDark ? 'text-rose-400' : 'text-rose-500'}`} />
+                <span className={`text-xs ${textMuted} whitespace-nowrap`}>Temp</span>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  step="1"
+                  value={temperature} 
+                  onChange={(e) => setTemperature(Number(e.target.value))}
+                  className="flex-1 h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                />
+                <span className={`text-xs ${textMuted} w-10 text-right`}>{temperature}°C</span>
+              </div>
+
+              {/* Electron Trails Toggle */}
+              <div className="flex items-center gap-2">
+                <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                <span className={`text-xs ${textMuted}`}>Trails</span>
+                <button
+                  onClick={() => {
+                    setShowTrails(!showTrails);
+                    if (!showTrails) trackFeature('trail_enable');
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    showTrails ? 'bg-purple-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      showTrails ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden`}>
             {/* Fullscreen Toggle Button */}
             <button
               onClick={toggleFullscreen}
-              className={`absolute top-4 right-4 z-10 p-2 rounded-lg ${bgSecondary} ${borderColor} border ${bgCardHover} transition-colors`}
+              className={`absolute top-4 right-4 z-10 p-2 rounded-lg ${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} border ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-colors`}
               title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
@@ -839,21 +919,21 @@ export default function App() {
             </div>
             
             {/* Legend / Info Overlay */}
-            <div className="mt-6 w-full max-w-[600px] flex flex-wrap gap-4 justify-center text-sm">
+            <div className={`mt-6 w-full max-w-[600px] flex flex-wrap gap-4 justify-center text-sm`}>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-red-500 border border-red-700 flex items-center justify-center">
+                <div className={`w-4 h-4 rounded-full bg-red-500 border ${isDark ? 'border-red-700' : 'border-red-400'} flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
                 <span className={textSecondary}>Metal A Cation</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-amber-500 border border-amber-700 flex items-center justify-center">
+                <div className={`w-4 h-4 rounded-full bg-amber-500 border ${isDark ? 'border-amber-700' : 'border-amber-400'} flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
                 <span className={textSecondary}>Metal B (Alloy)</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center">
+                <div className={`w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">-</span>
                 </div>
                 <span className={textSecondary}>Delocalized Electron</span>

@@ -16,6 +16,63 @@
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+/* Light mode range input styling */
+.light input[type="range"] {
+  background: transparent;
+  -webkit-appearance: none;
+}
+
+.light input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #cbd5e1;
+}
+
+.light input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: -5px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.light input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #cbd5e1;
+}
+
+.light input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Rose accent for light mode */
+.light input[type="range"].accent-rose-500::-webkit-slider-thumb {
+  background: #f43f5e;
+}
+
+.light input[type="range"].accent-rose-500::-moz-range-thumb {
+  background: #f43f5e;
+}
+
+/* Amber accent for light mode */
+.light input[type="range"].accent-amber-500::-webkit-slider-thumb {
+  background: #f59e0b;
+}
+
+.light input[type="range"].accent-amber-500::-moz-range-thumb {
+  background: #f59e0b;
+}
+
 /* Theme CSS Variables */
 :root {
   /* Dark theme (default) */
