@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
-import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle } from 'lucide-react';
+import { useTheme } from './hooks/useTheme';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Sun, Moon } from 'lucide-react';
 
 // Types
 interface Achievement {
@@ -100,6 +101,7 @@ const defaultChallenges: Challenge[] = [
 ];
 
 export default function App() {
+  const { theme, toggleTheme } = useTheme();
   const [mode, setMode] = useState<SimulationMode>('normal');
   const [showDiy, setShowDiy] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState<number>(0.25);
@@ -304,8 +306,28 @@ export default function App() {
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
+  const isDark = theme === 'dark';
+  
+  // Theme-aware classes
+  const bgPrimary = isDark ? 'bg-slate-900' : 'bg-slate-50';
+  const bgSecondary = isDark ? 'bg-slate-800' : 'bg-white';
+  const bgTertiary = isDark ? 'bg-slate-700' : 'bg-slate-200';
+  const bgCard = isDark ? 'bg-slate-800/50' : 'bg-white/80';
+  const bgCardHover = isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100';
+  const textPrimary = isDark ? 'text-slate-100' : 'text-slate-900';
+  const textSecondary = isDark ? 'text-slate-300' : 'text-slate-700';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const borderColor = isDark ? 'border-slate-700' : 'border-slate-200';
+  const borderLight = isDark ? 'border-slate-800' : 'border-slate-300';
+  const headerBg = isDark ? 'bg-slate-900/50' : 'bg-white/80';
+  const headerBorder = isDark ? 'border-slate-800' : 'border-slate-200';
+  const overlayBg = isDark ? 'bg-slate-950/80' : 'bg-slate-900/60';
+  const modalBg = isDark ? 'bg-slate-900' : 'bg-white';
+  const modalBorder = isDark ? 'border-slate-700' : 'border-slate-200';
+  const inputBg = isDark ? 'bg-slate-800' : 'bg-slate-100';
+  
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-blue-500/30">
+    <div className={`min-h-screen ${bgPrimary} ${textPrimary} font-sans selection:bg-blue-500/30 transition-colors duration-300`}>
       {/* Achievement Popup */}
       {newAchievement && (
         <div className="fixed top-20 right-4 z-50 animate-bounce">
@@ -319,22 +341,30 @@ export default function App() {
         </div>
       )}
 
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+      <header className={`border-b ${headerBorder} ${headerBg} backdrop-blur-md sticky top-0 z-10 transition-colors duration-300`}>
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-lg shadow-slate-500/20 border border-slate-500">
-              <Hexagon className="w-5 h-5 text-slate-200" />
+            <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 'bg-gradient-to-br from-violet-500 to-purple-600'} flex items-center justify-center ${isDark ? 'shadow-lg shadow-slate-500/20' : 'shadow-lg shadow-purple-500/30'} ${isDark ? 'border border-slate-500' : 'border border-purple-400'}`}>
+              <Hexagon className={`w-5 h-5 ${isDark ? 'text-slate-200' : 'text-white'}`} />
             </div>
             <div>
               <h1 className="text-xl font-semibold tracking-tight">Metallic Bonding Simulator</h1>
-              <p className="text-xs text-slate-400 font-medium">Interactive Model of Cations & Delocalized Electrons</p>
+              <p className={`text-xs ${textMuted} font-medium`}>Interactive Model of Cations & Delocalized Electrons</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-purple-500" />}
+              <span className="hidden sm:inline">{isDark ? 'Light' : 'Dark'}</span>
+            </button>
             {/* Achievement Button */}
             <button
               onClick={() => setShowAchievements(true)}
-              className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700"
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
             >
               <Trophy className="w-4 h-4 text-amber-400" />
               <span className="hidden sm:inline">{unlockedCount}/{achievements.length}</span>
@@ -342,12 +372,12 @@ export default function App() {
             {/* Challenge Button */}
             <button
               onClick={() => setShowChallenges(true)}
-              className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700"
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
             >
               <Target className="w-4 h-4 text-emerald-400" />
               <span className="hidden sm:inline">Challenges</span>
               {challenges.some(c => c.completed) && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full text-[10px] flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full text-[10px] flex items-center justify-center text-white">
                   {challenges.filter(c => c.completed).length}
                 </span>
               )}
@@ -355,7 +385,7 @@ export default function App() {
             {/* Quiz Button */}
             <button
               onClick={() => setShowQuiz(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
             >
               <Star className="w-4 h-4 text-purple-400" />
               <span className="hidden sm:inline">Quiz</span>
@@ -363,7 +393,7 @@ export default function App() {
             {/* DIY Button */}
             <button
               onClick={() => setShowDiy(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${bgSecondary} ${bgCardHover} transition-colors text-sm font-medium ${borderColor} border`}
             >
               <Info className="w-4 h-4" />
               <span className="hidden sm:inline">DIY Model</span>
@@ -376,15 +406,15 @@ export default function App() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Controls Sidebar - Fixed on desktop */}
           <div className="lg:w-80 lg:flex-shrink-0 space-y-6 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Simulation Mode</h2>
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-6`}>
+            <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider mb-4`}>Simulation Mode</h2>
             <div className="space-y-3">
               <button
                 onClick={() => setMode('normal')}
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                   mode === 'normal' 
                     ? 'bg-blue-500/10 border-blue-500/50 text-blue-400' 
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
                 } border`}
               >
                 <Play className="w-5 h-5" />
@@ -399,7 +429,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                   mode === 'malleable' 
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
                 } border`}
               >
                 <Move className="w-5 h-5" />
@@ -459,7 +489,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                   mode === 'electrical' 
                     ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' 
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
                 } border`}
               >
                 <Zap className="w-5 h-5" />
@@ -474,7 +504,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                   mode === 'circuit' 
                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' 
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
                 } border`}
               >
                 <Zap className="w-5 h-5" />
@@ -489,7 +519,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                   mode === 'heat' 
                     ? 'bg-rose-500/10 border-rose-500/50 text-rose-400' 
-                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300'
+                    : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
                 } border`}
               >
                 <Flame className="w-5 h-5" />
@@ -502,19 +532,19 @@ export default function App() {
           </div>
 
           {/* Advanced Features Dropdown */}
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-visible transition-all duration-300">
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl overflow-visible transition-all duration-300`}>
             <button
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full flex items-center justify-between p-6 hover:bg-slate-800/30 transition-colors"
+              className={`w-full flex items-center justify-between p-6 hover:${bgCardHover} transition-colors`}
             >
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider flex items-center gap-2`}>
                 <Settings className="w-4 h-4" />
                 Advanced Features
               </h2>
               {showAdvanced ? (
-                <ChevronUp className="w-5 h-5 text-slate-400" />
+                <ChevronUp className={`w-5 h-5 ${textMuted}`} />
               ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
+                <ChevronDown className={`w-5 h-5 ${textMuted}`} />
               )}
             </button>
             
@@ -524,15 +554,15 @@ export default function App() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-300">Animation Speed</span>
+                      <span className={`text-sm ${textSecondary}`}>Animation Speed</span>
                       <div className="group relative">
-                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50`}>
                           Controls how fast delocalized electrons move. In real metals, electrons move at ~1,000,000 m/s (Fermi velocity), represented by 10x speed.
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400">{animationSpeed.toFixed(2)}x</span>
+                    <span className={`text-xs ${textMuted}`}>{animationSpeed.toFixed(2)}x</span>
                   </div>
                   <input 
                     type="range" 
@@ -543,7 +573,7 @@ export default function App() {
                     onChange={(e) => setAnimationSpeed(Number(e.target.value))}
                     className="w-full accent-blue-500"
                   />
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} mt-1`}>
                     Real life: ~1,000,000 m/s (10x)
                   </p>
                 </div>
@@ -553,15 +583,15 @@ export default function App() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Thermometer className="w-4 h-4 text-rose-400" />
-                      <span className="text-sm text-slate-300">Temperature</span>
+                      <span className={`text-sm ${textSecondary}`}>Temperature</span>
                       <div className="group relative">
-                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50`}>
                           Higher temperature increases cation vibration amplitude and electron kinetic energy. This demonstrates thermal expansion and heat conduction.
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400">{temperature}°C</span>
+                    <span className={`text-xs ${textMuted}`}>{temperature}°C</span>
                   </div>
                   <input 
                     type="range" 
@@ -757,7 +787,7 @@ export default function App() {
 
         {/* Main Canvas Area */}
         <div className="lg:flex-1 flex flex-col">
-          <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden">
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden`}>
             <MetalSimulation 
               mode={mode} 
               isRecording={isRecording}
@@ -782,32 +812,32 @@ export default function App() {
                 <div className="w-4 h-4 rounded-full bg-red-500 border border-red-700 flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
-                <span className="text-slate-300">Metal A Cation</span>
+                <span className={textSecondary}>Metal A Cation</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-amber-500 border border-amber-700 flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
-                <span className="text-slate-300">Metal B (Alloy)</span>
+                <span className={textSecondary}>Metal B (Alloy)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">-</span>
                 </div>
-                <span className="text-slate-300">Delocalized Electron</span>
+                <span className={textSecondary}>Delocalized Electron</span>
               </div>
             </div>
           </div>
           
-          <div className="mt-6 bg-slate-800/30 border border-slate-700/50 rounded-2xl p-6">
-            <h3 className="text-lg font-medium text-white mb-2">
+          <div className={`mt-6 ${bgCard} border ${borderColor}/50 rounded-2xl p-6`}>
+            <h3 className={`text-lg font-medium ${textPrimary} mb-2`}>
               {mode === 'normal' && "The 'Sea of Electrons' Model"}
               {mode === 'malleable' && "Malleability & Ductility"}
               {mode === 'electrical' && "Electrical Conductivity"}
               {mode === 'circuit' && "Complete Circuit Animation"}
               {mode === 'heat' && "Thermal Conductivity"}
             </h3>
-            <p className="text-slate-400 leading-relaxed">
+            <p className={`${textMuted} leading-relaxed`}>
               {mode === 'normal' && "A metal is composed of an extensive three-dimensional arrangement of positively charged ions (cations) immersed in a 'sea' of delocalized electrons. These mobile electrons can flow freely throughout the entire metallic structure, which explains why metals exhibit their characteristic physical properties."}
               {mode === 'malleable' && "The delocalized electrons function as a dynamic, flexible binding agent within the metal. When an external force is applied—such as dragging a layer of cations—the atomic layers can shift relative to one another without disrupting the metallic bonds. This sliding mechanism underlies the malleability of metals (ability to be flattened into sheets) and ductility (capacity to be stretched into wires)."}
               {mode === 'electrical' && "Applying an electrical potential difference across a metal causes the delocalized electrons to drift systematically toward the positive terminal. This directed movement of electric charge constitutes an electric current. The unrestricted mobility of electrons within the metallic lattice makes metals highly efficient conductors of electricity."}
@@ -821,16 +851,16 @@ export default function App() {
 
       {/* Quiz Modal */}
       {showQuiz && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${overlayBg} backdrop-blur-sm transition-colors duration-300`}>
+          <div className={`${modalBg} border ${modalBorder} rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 ${modalBg}/90 backdrop-blur-md border-b ${modalBorder} p-6 flex items-center justify-between`}>
+              <h2 className={`text-xl font-semibold ${textPrimary} flex items-center gap-2`}>
                 <Star className="w-5 h-5 text-purple-400" />
                 Quiz: Metallic Bonding
               </h2>
               <button 
                 onClick={() => setShowQuiz(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-2 rounded-lg ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} ${textMuted} hover:${textPrimary} transition-colors`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -839,11 +869,11 @@ export default function App() {
             {showQuizResult ? (
               <div className="p-6 text-center">
                 <div className="text-6xl mb-4">🎉</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Quiz Complete!</h3>
-                <p className="text-slate-400 mb-4">
+                <h3 className={`text-2xl font-bold ${textPrimary} mb-2`}>Quiz Complete!</h3>
+                <p className={`${textMuted} mb-4`}>
                   You scored <span className="text-emerald-400 font-bold">{quizScore}</span> out of <span className="font-bold">{quizQuestions.length}</span>
                 </p>
-                <p className="text-slate-500 mb-6">
+                <p className={`${isDark ? 'text-slate-500' : 'text-slate-500'} mb-6`}>
                   {quizScore === quizQuestions.length 
                     ? "Perfect score! You're a metallic bonding expert! 🧙‍♂️"
                     : quizScore >= quizQuestions.length * 0.7 
@@ -860,12 +890,12 @@ export default function App() {
             ) : (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-400">Question {currentQuestion + 1} of {quizQuestions.length}</span>
-                  <span className="text-sm text-slate-400">Score: {quizScore}</span>
+                  <span className={`text-sm ${textMuted}`}>Question {currentQuestion + 1} of {quizQuestions.length}</span>
+                  <span className={`text-sm ${textMuted}`}>Score: {quizScore}</span>
                 </div>
                 
                 {/* Progress bar */}
-                <div className="h-2 bg-slate-800 rounded-full mb-6 overflow-hidden">
+                <div className={`h-2 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} rounded-full mb-6 overflow-hidden`}>
                   <div 
                     className="h-full bg-purple-500 transition-all duration-300"
                     style={{ width: `${((currentQuestion + 1) / quizQuestions.length) * 100}%` }}
@@ -946,16 +976,16 @@ export default function App() {
 
       {/* Achievements Modal */}
       {showAchievements && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${overlayBg} backdrop-blur-sm transition-colors duration-300`}>
+          <div className={`${modalBg} border ${modalBorder} rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 ${modalBg}/90 backdrop-blur-md border-b ${modalBorder} p-6 flex items-center justify-between`}>
+              <h2 className={`text-xl font-semibold ${textPrimary} flex items-center gap-2`}>
                 <Trophy className="w-5 h-5 text-amber-400" />
                 Achievements
               </h2>
               <button 
                 onClick={() => setShowAchievements(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-2 rounded-lg ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} ${textMuted} hover:${textPrimary} transition-colors`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -967,15 +997,15 @@ export default function App() {
                   className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                     achievement.unlocked
                       ? 'bg-amber-500/10 border-amber-500/50'
-                      : 'bg-slate-800/50 border-slate-700 opacity-60'
+                      : `${bgCard} border-slate-700 opacity-60`
                   }`}
                 >
                   <span className="text-3xl">{achievement.icon}</span>
                   <div className="flex-1">
-                    <div className={`font-medium ${achievement.unlocked ? 'text-amber-400' : 'text-slate-400'}`}>
+                    <div className={`font-medium ${achievement.unlocked ? 'text-amber-400' : textMuted}`}>
                       {achievement.name}
                     </div>
-                    <div className="text-sm text-slate-500">{achievement.description}</div>
+                    <div className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{achievement.description}</div>
                   </div>
                   {achievement.unlocked && (
                     <Check className="w-5 h-5 text-emerald-400" />
@@ -984,7 +1014,7 @@ export default function App() {
               ))}
             </div>
             <div className="px-6 pb-6 text-center">
-              <p className="text-slate-400 text-sm">
+              <p className={`${textMuted} text-sm`}>
                 {unlockedCount} of {achievements.length} achievements unlocked
               </p>
             </div>
@@ -994,16 +1024,16 @@ export default function App() {
 
       {/* Challenges Modal */}
       {showChallenges && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${overlayBg} backdrop-blur-sm transition-colors duration-300`}>
+          <div className={`${modalBg} border ${modalBorder} rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 ${modalBg}/90 backdrop-blur-md border-b ${modalBorder} p-6 flex items-center justify-between`}>
+              <h2 className={`text-xl font-semibold ${textPrimary} flex items-center gap-2`}>
                 <Target className="w-5 h-5 text-emerald-400" />
                 Challenges
               </h2>
               <button 
                 onClick={() => setShowChallenges(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-2 rounded-lg ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} ${textMuted} hover:${textPrimary} transition-colors`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1015,31 +1045,29 @@ export default function App() {
                   className={`p-4 rounded-xl border transition-all ${
                     challenge.completed
                       ? 'bg-emerald-500/10 border-emerald-500/50'
-                      : 'bg-slate-800/50 border-slate-700'
+                      : `${bgCard} border-slate-700`
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-white">{challenge.title}</h3>
+                      <h3 className={`font-medium ${textPrimary}`}>{challenge.title}</h3>
                       {challenge.completed && <Check className="w-4 h-4 text-emerald-400" />}
                     </div>
-                    <span className="text-sm text-slate-400">
+                    <span className={`text-sm ${textMuted}`}>
                       {challenge.current}/{challenge.target} {challenge.unit}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-400 mb-3">{challenge.description}</p>
+                  <p className={`text-sm ${textMuted} mb-3`}>{challenge.description}</p>
                   
                   {/* Progress bar */}
-                  <div className="h-2 bg-slate-800 rounded-full mb-3 overflow-hidden">
+                  <div className={`h-2 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} rounded-full mb-3 overflow-hidden`}>
                     <div 
-                      className={`h-full transition-all duration-500 ${
-                        challenge.completed ? 'bg-emerald-500' : 'bg-emerald-500/50'
-                      }`}
+                      className={`h-full transition-all duration-500 ${challenge.completed ? 'bg-emerald-500' : 'bg-emerald-500/50'}`}
                       style={{ width: `${(challenge.current / challenge.target) * 100}%` }}
                     />
                   </div>
                   
-                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                  <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} flex items-center gap-1`}>
                     <Lightbulb className="w-3 h-3" />
                     Hint: {challenge.hint}
                   </p>
@@ -1047,7 +1075,7 @@ export default function App() {
               ))}
             </div>
             <div className="px-6 pb-6 text-center">
-              <p className="text-slate-400 text-sm">
+              <p className={`${textMuted} text-sm`}>
                 {challenges.filter(c => c.completed).length} of {challenges.length} challenges completed
               </p>
             </div>
@@ -1057,26 +1085,26 @@ export default function App() {
 
       {/* DIY Modal */}
       {showDiy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${overlayBg} backdrop-blur-sm transition-colors duration-300`}>
+          <div className={`${modalBg} border ${modalBorder} rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 ${modalBg}/90 backdrop-blur-md border-b ${modalBorder} p-6 flex items-center justify-between`}>
+              <h2 className={`text-xl font-semibold ${textPrimary} flex items-center gap-2`}>
                 <Info className="w-5 h-5 text-blue-400" />
                 Build a Physical Model at Home
               </h2>
               <button 
                 onClick={() => setShowDiy(false)}
-                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className={`p-2 rounded-lg ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} ${textMuted} hover:${textPrimary} transition-colors`}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-6 text-slate-300">
+            <div className={`p-6 space-y-6 ${textSecondary}`}>
               <p>You can easily build a physical version of this model using everyday household items to demonstrate metallic bonding to a class or for a science project.</p>
               
               <div>
-                <h3 className="text-white font-medium mb-3">Materials Needed:</h3>
-                <ul className="list-disc pl-5 space-y-2 text-slate-400">
+                <h3 className={`${textPrimary} font-medium mb-3`}>Materials Needed:</h3>
+                <ul className={`list-disc pl-5 space-y-2 ${textMuted}`}>
                   <li>A clear plastic box or shallow tray (like a Tupperware container)</li>
                   <li>Large, identical spherical objects to represent <strong>cations</strong> (e.g., ping pong balls, marbles, or large beads)</li>
                   <li>Small, highly mobile objects to represent <strong>delocalized electrons</strong> (e.g., small seed beads, BB pellets, or even coarse sand)</li>
@@ -1084,19 +1112,19 @@ export default function App() {
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-3">How to Build & Demonstrate:</h3>
-                <ol className="list-decimal pl-5 space-y-4 text-slate-400">
+                <h3 className={`${textPrimary} font-medium mb-3`}>How to Build & Demonstrate:</h3>
+                <ol className={`list-decimal pl-5 space-y-4 ${textMuted}`}>
                   <li>
-                    <strong className="text-slate-300">Setup:</strong> Place the large balls (cations) into the clear container so they form a neat, packed layer (a lattice). Pour the small beads (electrons) over them so they fill the gaps.
+                    <strong className={textSecondary}>Setup:</strong> Place the large balls (cations) into the clear container so they form a neat, packed layer (a lattice). Pour the small beads (electrons) over them so they fill the gaps.
                   </li>
                   <li>
-                    <strong className="text-slate-300">Normal State:</strong> Gently shake the container. Notice how the large balls vibrate slightly in place, while the small beads move freely around and between them.
+                    <strong className={textSecondary}>Normal State:</strong> Gently shake the container. Notice how the large balls vibrate slightly in place, while the small beads move freely around and between them.
                   </li>
                   <li>
-                    <strong className="text-slate-300">Malleability:</strong> Use a ruler or your hand to push one row of the large balls. Watch how the row slides over the adjacent row, but the small beads immediately flow into the new gaps, keeping the structure "glued" together.
+                    <strong className={textSecondary}>Malleability:</strong> Use a ruler or your hand to push one row of the large balls. Watch how the row slides over the adjacent row, but the small beads immediately flow into the new gaps, keeping the structure "glued" together.
                   </li>
                   <li>
-                    <strong className="text-slate-300">Conductivity:</strong> Tilt the container slightly. The large balls will mostly stay in their lattice (if packed tightly), but the small beads will rapidly flow to one side, demonstrating how electrons carry a current or heat.
+                    <strong className={textSecondary}>Conductivity:</strong> Tilt the container slightly. The large balls will mostly stay in their lattice (if packed tightly), but the small beads will rapidly flow to one side, demonstrating how electrons carry a current or heat.
                   </li>
                 </ol>
               </div>
@@ -1106,8 +1134,8 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/50 py-4 text-center">
-        <p className="text-sm text-slate-500">author: Kirk</p>
+      <footer className={`border-t ${headerBorder} ${headerBg} py-4 text-center transition-colors duration-300`}>
+        <p className={`text-sm ${textMuted}`}>author: Kirk</p>
       </footer>
     </div>
   );

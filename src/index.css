@@ -1,1 +1,118 @@
 @import "tailwindcss";
+
+/* Theme CSS Variables */
+:root {
+  /* Dark theme (default) */
+  --theme-bg-primary: #0f172a;
+  --theme-bg-secondary: #1e293b;
+  --theme-bg-tertiary: #334155;
+  --theme-bg-card: rgba(30, 41, 59, 0.5);
+  --theme-bg-card-hover: rgba(30, 41, 59, 0.8);
+  --theme-border: #334155;
+  --theme-border-light: #475569;
+  --theme-text-primary: #f1f5f9;
+  --theme-text-secondary: #94a3b8;
+  --theme-text-muted: #64748b;
+  --theme-accent: #8b5cf6;
+  --theme-accent-hover: #7c3aed;
+  --theme-accent-light: rgba(139, 92, 246, 0.1);
+  --theme-accent-border: rgba(139, 92, 246, 0.5);
+  --theme-shadow: rgba(0, 0, 0, 0.3);
+  --theme-glow: rgba(139, 92, 246, 0.3);
+  
+  /* Modal overlay */
+  --theme-overlay: rgba(15, 23, 42, 0.8);
+  --theme-overlay-bg: #0f172a;
+  
+  /* Input/slider colors */
+  --theme-input-bg: #334155;
+  
+  /* Simulation canvas - dark by default */
+  --simulation-bg: #0a0a0f;
+}
+
+:root.light {
+  /* Light theme */
+  --theme-bg-primary: #f8fafc;
+  --theme-bg-secondary: #f1f5f9;
+  --theme-bg-tertiary: #e2e8f0;
+  --theme-bg-card: rgba(241, 245, 249, 0.8);
+  --theme-bg-card-hover: rgba(241, 245, 249, 1);
+  --theme-border: #cbd5e1;
+  --theme-border-light: #94a3b8;
+  --theme-text-primary: #0f172a;
+  --theme-text-secondary: #475569;
+  --theme-text-muted: #64748b;
+  --theme-accent: #7c3aed;
+  --theme-accent-hover: #6d28d9;
+  --theme-accent-light: rgba(124, 58, 237, 0.1);
+  --theme-accent-border: rgba(124, 58, 237, 0.5);
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  --theme-glow: rgba(124, 58, 237, 0.2);
+  
+  /* Modal overlay */
+  --theme-overlay: rgba(241, 245, 249, 0.9);
+  --theme-overlay-bg: #f8fafc;
+  
+  /* Input/slider colors */
+  --theme-input-bg: #cbd5e1;
+  
+  /* Simulation canvas - keep dark for contrast */
+  --simulation-bg: #0a0a0f;
+}
+
+/* Apply theme colors to body */
+body {
+  background-color: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode default - override with light class */
+.dark body,
+body.dark {
+  background-color: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+}
+
+/* Light mode */
+.light body,
+body.light {
+  background-color: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+}
+
+/* Theme-aware utility classes */
+.theme-bg-primary { background-color: var(--theme-bg-primary); }
+.theme-bg-secondary { background-color: var(--theme-bg-secondary); }
+.theme-bg-tertiary { background-color: var(--theme-bg-tertiary); }
+.theme-bg-card { background-color: var(--theme-bg-card); }
+.theme-bg-card-hover:hover { background-color: var(--theme-bg-card-hover); }
+.theme-border { border-color: var(--theme-border); }
+.theme-border-light { border-color: var(--theme-border-light); }
+.theme-text-primary { color: var(--theme-text-primary); }
+.theme-text-secondary { color: var(--theme-text-secondary); }
+.theme-text-muted { color: var(--theme-text-muted); }
+.theme-accent { color: var(--theme-accent); }
+.theme-accent-bg { background-color: var(--theme-accent-light); }
+.theme-accent-border { border-color: var(--theme-accent-border); }
+.theme-shadow { box-shadow: 0 4px 6px -1px var(--theme-shadow); }
+
+/* Custom scrollbar for light theme */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: var(--theme-bg-secondary);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: var(--theme-border-light);
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-muted);
+}
