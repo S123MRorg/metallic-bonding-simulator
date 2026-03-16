@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MetalSimulation, { SimulationMode } from './components/MetalSimulation';
 import { useTheme } from './hooks/useTheme';
-import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Sun, Moon } from 'lucide-react';
+import { Info, Zap, Flame, Move, Play, X, Hexagon, Download, Loader2, Trophy, Target, ChevronDown, ChevronUp, Thermometer, Zap as VoltageIcon, Plus, Eye, Sparkles, Layers, Settings, Check, Clock, Lightbulb, MousePointer, Flame as HeatIcon, Grid3X3, Gem, Star, HelpCircle, Sun, Moon, Maximize2, Minimize2 } from 'lucide-react';
 
 // Types
 interface Achievement {
@@ -124,6 +124,7 @@ export default function App() {
   const [crystalStructure, setCrystalStructure] = useState<'square' | 'hexagonal' | 'fcc'>('square');
   const [alloyMix, setAlloyMix] = useState(0); // 0-100 percentage
   const [singleLayerMode, setSingleLayerMode] = useState(false); // Toggle for malleability
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Quiz state
   const [showQuiz, setShowQuiz] = useState(false);
@@ -245,6 +246,26 @@ export default function App() {
     setShowExplanation(false);
   };
 
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // Update challenge progress
   useEffect(() => {
     const timer = setInterval(() => {
@@ -313,7 +334,7 @@ export default function App() {
   const bgSecondary = isDark ? 'bg-slate-800' : 'bg-white';
   const bgTertiary = isDark ? 'bg-slate-700' : 'bg-slate-200';
   const bgCard = isDark ? 'bg-slate-800/50' : 'bg-white/80';
-  const bgCardHover = isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100';
+  const bgCardHover = isDark ? 'hover:bg-slate-700' : 'hover:bg-purple-100';
   const textPrimary = isDark ? 'text-slate-100' : 'text-slate-900';
   const textSecondary = isDark ? 'text-slate-300' : 'text-slate-700';
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
@@ -411,7 +432,7 @@ export default function App() {
             <div className="space-y-3">
               <button
                 onClick={() => setMode('normal')}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'normal' 
                     ? 'bg-blue-500/10 border-blue-500/50 text-blue-400' 
                     : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
@@ -426,7 +447,7 @@ export default function App() {
 
               <button
                 onClick={() => setMode('malleable')}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'malleable' 
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
                     : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
@@ -441,12 +462,12 @@ export default function App() {
 
               {mode === 'malleable' && (
                 <div className="space-y-2">
-                  <div className="pl-4 pr-2 py-2 flex items-center justify-between bg-slate-800/30 rounded-lg border border-slate-700/30">
-                    <span className="text-sm text-slate-300">Auto-demonstrate</span>
+                  <div className={`pl-4 pr-2 py-2 flex items-center justify-between ${isDark ? 'bg-slate-800/30' : 'bg-slate-100'} rounded-lg border ${isDark ? 'border-slate-700/30' : 'border-slate-200'}`}>
+                    <span className={`text-sm ${textSecondary}`}>Auto-demonstrate</span>
                     <button
                       onClick={() => setAutoMalleable(!autoMalleable)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        autoMalleable ? 'bg-emerald-500' : 'bg-slate-600'
+                        autoMalleable ? 'bg-emerald-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                       }`}
                     >
                       <span
@@ -458,12 +479,12 @@ export default function App() {
                   </div>
                   
                   {/* Single Layer Mode Toggle */}
-                  <div className="pl-4 pr-2 py-2 flex items-center justify-between bg-slate-800/30 rounded-lg border border-slate-700/30">
+                  <div className={`pl-4 pr-2 py-2 flex items-center justify-between ${isDark ? 'bg-slate-800/30' : 'bg-slate-100'} rounded-lg border ${isDark ? 'border-slate-700/30' : 'border-slate-200'}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-300">Single Layer Mode</span>
+                      <span className={`text-sm ${textSecondary}`}>Single Layer Mode</span>
                       <div className="group relative">
-                        <HelpCircle className="w-4 h-4 text-slate-500 cursor-help" />
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
                           When enabled, only the dragged layer moves. When disabled (scientific), layers above move together.
                         </div>
                       </div>
@@ -471,7 +492,7 @@ export default function App() {
                     <button
                       onClick={() => setSingleLayerMode(!singleLayerMode)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        singleLayerMode ? 'bg-blue-500' : 'bg-slate-600'
+                        singleLayerMode ? 'bg-blue-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                       }`}
                     >
                       <span
@@ -486,7 +507,7 @@ export default function App() {
 
               <button
                 onClick={() => setMode('electrical')}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'electrical' 
                     ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' 
                     : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
@@ -501,7 +522,7 @@ export default function App() {
 
               <button
                 onClick={() => setMode('circuit')}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'circuit' 
                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' 
                     : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
@@ -516,7 +537,7 @@ export default function App() {
 
               <button
                 onClick={() => setMode('heat')}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
                   mode === 'heat' 
                     ? 'bg-rose-500/10 border-rose-500/50 text-rose-400' 
                     : `${bgSecondary} border-slate-700 hover:bg-slate-700 ${textSecondary}`
@@ -787,8 +808,17 @@ export default function App() {
 
         {/* Main Canvas Area */}
         <div className="lg:flex-1 flex flex-col">
-          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden`}>
-            <MetalSimulation 
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+            {/* Fullscreen Toggle Button */}
+            <button
+              onClick={toggleFullscreen}
+              className={`absolute top-4 right-4 z-10 p-2 rounded-lg ${bgSecondary} ${borderColor} border ${bgCardHover} transition-colors`}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </button>
+            <div key={mode} className="animate-fade-in w-full h-full flex items-center justify-center">
+              <MetalSimulation 
               mode={mode} 
               isRecording={isRecording}
               animationSpeed={animationSpeed}
@@ -804,7 +834,9 @@ export default function App() {
               alloyMix={alloyMix}
               onParticleSpawn={() => trackFeature('electron_add')}
               onLayerSlide={() => trackFeature('layer_slide')}
+              theme={theme}
             />
+            </div>
             
             {/* Legend / Info Overlay */}
             <div className="mt-6 w-full max-w-[600px] flex flex-wrap gap-4 justify-center text-sm">

@@ -45,6 +45,7 @@ interface Props {
   singleLayerMode?: boolean; // Toggle for single vs multi-layer sliding
   onParticleSpawn?: () => void;
   onLayerSlide?: () => void;
+  theme?: 'light' | 'dark'; // Theme prop for canvas colors
 }
 
 const CANVAS_WIDTH = 600;
@@ -91,7 +92,8 @@ export default function MetalSimulation({
   alloyMix = 0,
   singleLayerMode = false,
   onParticleSpawn,
-  onLayerSlide
+  onLayerSlide,
+  theme = 'dark'
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
@@ -487,7 +489,8 @@ export default function MetalSimulation({
       }
 
       // Draw Background
-      ctx.fillStyle = '#1e293b'; // slate-800
+      const isLight = theme === 'light';
+      ctx.fillStyle = isLight ? '#f1f5f9' : '#1e293b'; // slate-50 for light, slate-800 for dark
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.save();
@@ -558,14 +561,15 @@ export default function MetalSimulation({
         ctx.fillRect(510, 267, 20, 15);
 
         // Draw Metal Background
-        ctx.fillStyle = '#0f172a'; // darker slate for metal background
+        const metalBgColor = isLight ? '#e2e8f0' : '#0f172a'; // lighter slate for light mode
+        ctx.fillStyle = metalBgColor; // darker slate for metal background
         ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
         ctx.lineWidth = 2;
         ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
         
         // Label
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = isLight ? '#475569' : '#64748b';
         ctx.font = '12px Inter';
         ctx.textAlign = 'left';
         ctx.fillText('METAL WIRE / MATERIAL', bounds.x + 10, bounds.y - 10);
@@ -667,19 +671,19 @@ export default function MetalSimulation({
 
       // Draw Overlay Text for Heat Mode
       if (mode === 'heat' && overlayTitle) {
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // slate-900 with opacity
+        ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)'; // slate-50 for light, slate-900 for dark
         ctx.fillRect(20, CANVAS_HEIGHT - 90, CANVAS_WIDTH - 40, 70);
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
         ctx.lineWidth = 2;
         ctx.strokeRect(20, CANVAS_HEIGHT - 90, CANVAS_WIDTH - 40, 70);
 
-        ctx.fillStyle = '#f8fafc'; // slate-50
+        ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc'; // slate-900 for light, slate-50 for dark
         ctx.font = 'bold 16px Inter, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(overlayTitle, 40, CANVAS_HEIGHT - 75);
 
-        ctx.fillStyle = '#94a3b8'; // slate-400
+        ctx.fillStyle = isLight ? '#64748b' : '#94a3b8'; // slate-500 for light, slate-400 for dark
         ctx.font = '14px Inter, sans-serif';
         ctx.fillText(overlayText, 40, CANVAS_HEIGHT - 50, CANVAS_WIDTH - 80);
         
