@@ -618,6 +618,28 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Keyboard shortcut for fullscreen (F key)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      // F key to toggle fullscreen
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+      // Escape also exits fullscreen (browser default), but we can handle it explicitly
+      if (e.key === 'Escape' && isFullscreen) {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
   // Update challenge progress
   useEffect(() => {
     const timer = setInterval(() => {
@@ -942,35 +964,7 @@ export default function App() {
             
             {showAdvanced && (
               <div className="px-6 pb-6 space-y-4 animate-fade-in">
-                {/* Animation Speed */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm ${textSecondary}`}>Animation Speed</span>
-                      <div className="group relative">
-                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                          Controls how fast delocalized electrons move. In real metals, electrons move at ~1,000,000 m/s (Fermi velocity), represented by 10x speed.
-                        </div>
-                      </div>
-                    </div>
-                    <span className={`text-xs ${textMuted}`}>{animationSpeed.toFixed(2)}x</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0.01" 
-                    max="10" 
-                    step="0.01"
-                    value={animationSpeed} 
-                    onChange={(e) => setAnimationSpeed(Number(e.target.value))}
-                    className="w-full accent-blue-500"
-                  />
-                  <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} mt-1`}>
-                    Real life: ~1,000,000 m/s (10x)
-                  </p>
-                </div>
 
-                {/* Auto Demonstrate Speed */}
                 {mode === 'malleable' && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -994,60 +988,6 @@ export default function App() {
                       value={autoDemoSpeed} 
                       onChange={(e) => setAutoDemoSpeed(Number(e.target.value))}
                       className="w-full accent-cyan-500"
-                    />
-                  </div>
-                )}
-
-                {/* Temperature Control */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Thermometer className={`w-4 h-4 ${isDark ? 'text-rose-400' : 'text-rose-500'}`} />
-                      <span className={`text-sm ${textSecondary}`}>Temperature</span>
-                      <div className="group relative">
-                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                          Higher temperature increases cation vibration amplitude and electron kinetic energy. This demonstrates thermal expansion and heat conduction.
-                        </div>
-                      </div>
-                    </div>
-                    <span className={`text-xs ${textMuted}`}>{temperature}°C</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    step="1"
-                    value={temperature} 
-                    onChange={(e) => setTemperature(Number(e.target.value))}
-                    className="w-full accent-rose-500"
-                  />
-                </div>
-
-                {/* Voltage Control */}
-                {(mode === 'electrical' || mode === 'circuit') && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <VoltageIcon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                        <span className={`text-sm ${textSecondary}`}>Voltage</span>
-                        <div className="group relative">
-                          <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                          <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                            Voltage creates an electric field that applies force on electrons, causing them to drift toward the positive terminal. Higher voltage = stronger force = faster electron flow.
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`text-xs ${textMuted}`}>{voltage}V</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="100" 
-                      step="1"
-                      value={voltage} 
-                      onChange={(e) => setVoltage(Number(e.target.value))}
-                      className="w-full accent-amber-500"
                     />
                   </div>
                 )}
@@ -1208,15 +1148,33 @@ export default function App() {
         {/* Main Canvas Area - Fullscreen Wrapper */}
         <div 
           ref={simulationContainerRef}
-          className={`lg:flex-1 flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-black' : ''}`}
-          style={isFullscreen ? { padding: '0', backgroundColor: isDark ? '#0f172a' : '#f8fafc' } : {}}
+          className={`lg:flex-1 flex flex-col ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
+          style={isFullscreen ? { 
+            padding: '0', 
+            backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+            display: 'flex',
+            flexDirection: 'column'
+          } : {}}
         >
+          {/* Fullscreen Mode Indicator */}
+          {isFullscreen && (
+            <div className={`absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 ${isDark ? 'bg-slate-800/90 text-blue-300' : 'bg-white/90 text-blue-600'} backdrop-blur-sm shadow-lg border ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>Full Screen</span>
+              <span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} text-[10px]`}>Press F or Esc to exit</span>
+            </div>
+          )}
+
           {/* Quick Controls Bar - Animation Speed, Temperature, Electron Trails */}
           <div 
-            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'mx-2 mt-2' : ''}`}
-            style={isFullscreen ? { maxWidth: '1400px', margin: '0 auto', width: 'calc(100% - 16px)' } : {}}
+            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'mx-0 mt-0 rounded-none border-t-0 border-x-0' : ''}`}
+            style={isFullscreen ? { 
+              width: '100%', 
+              maxWidth: 'none',
+              borderRadius: '0'
+            } : {}}
           >
-            <div className={`flex flex-wrap items-center gap-6 ${isFullscreen ? 'gap-4' : ''}`}>
+            <div className={`flex flex-wrap items-center gap-6 ${isFullscreen ? 'gap-4 max-w-[1600px] mx-auto px-4' : ''}`}>
               {/* Animation Speed */}
               <div className="flex items-center gap-2 flex-1 min-w-[140px]">
                 <span className={`text-xs ${textMuted} whitespace-nowrap`}>Speed</span>
@@ -1291,16 +1249,26 @@ export default function App() {
 
           {/* Simulation Canvas */}
           <div 
-            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-4 flex-grow flex flex-col items-center justify-center relative overflow-hidden card-hover ${isFullscreen ? '!rounded-none !border-0 mt-2' : 'mt-4'}`}
-            style={isFullscreen ? { maxWidth: '1400px', margin: '0 auto', width: 'calc(100% - 16px)', minHeight: '70vh' } : {}}
+            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-4 flex-grow flex flex-col items-center justify-center relative overflow-hidden card-hover ${isFullscreen ? '!rounded-none !border-0 mt-0 flex-1' : 'mt-4'}`}
+            style={isFullscreen ? { 
+              width: '100%', 
+              maxWidth: 'none',
+              minHeight: '0',
+              height: '100%'
+            } : {}}
           >
-            {/* Fullscreen Toggle Button */}
+            {/* Fullscreen Toggle Button - Enhanced for fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className={`absolute top-4 right-4 z-10 p-2 rounded-lg ${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} border ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-all duration-200 hover:scale-110 active:scale-95`}
-              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              className={`absolute top-4 right-4 z-20 p-2.5 rounded-lg ${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} border ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg ${isFullscreen ? 'bg-red-500/90 hover:bg-red-600 border-red-400 text-white' : ''}`}
+              title={isFullscreen ? 'Exit Fullscreen (F or Esc)' : 'Fullscreen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isFullscreen ? (
+                <div className="flex items-center gap-1.5">
+                  <Minimize2 className="w-5 h-5" />
+                  <span className="text-xs font-medium">Exit</span>
+                </div>
+              ) : <Maximize2 className="w-5 h-5" />}
             </button>
             <div key={mode} className="animate-fade-in w-full h-full flex items-center justify-center">
               <MetalSimulation 
@@ -1325,24 +1293,24 @@ export default function App() {
             </div>
             
             {/* Legend / Info Overlay */}
-            <div className={`mt-4 w-full max-w-[800px] flex flex-wrap gap-4 justify-center text-sm`}>
+            <div className={`${isFullscreen ? 'absolute bottom-4 left-1/2 -translate-x-1/2' : 'mt-4'} w-full max-w-[800px] flex flex-wrap gap-4 justify-center text-sm ${isFullscreen ? 'bg-black/60 backdrop-blur-md px-4 py-2 rounded-full' : ''}`}>
               <div className="flex items-center gap-2">
                 <div className={`w-4 h-4 rounded-full bg-red-500 border ${isDark ? 'border-red-700' : 'border-red-400'} flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
-                <span className={textSecondary}>Metal A Cation</span>
+                <span className={isFullscreen ? 'text-white/90 text-xs' : textSecondary}>Metal A Cation</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`w-4 h-4 rounded-full bg-amber-500 border ${isDark ? 'border-amber-700' : 'border-amber-400'} flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">+</span>
                 </div>
-                <span className={textSecondary}>Metal B (Alloy)</span>
+                <span className={isFullscreen ? 'text-white/90 text-xs' : textSecondary}>Metal B (Alloy)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">-</span>
                 </div>
-                <span className={textSecondary}>Delocalized Electron</span>
+                <span className={isFullscreen ? 'text-white/90 text-xs' : textSecondary}>Delocalized Electron</span>
               </div>
             </div>
           </div>

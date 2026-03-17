@@ -667,12 +667,12 @@ export default function MetalSimulation({
       electrons.forEach((e, i) => {
         ctx.beginPath();
         ctx.arc(e.x, e.y, ELECTRON_RADIUS, 0, Math.PI * 2);
-        // Use darker blue for light theme visibility
-        ctx.fillStyle = isLight ? '#1d4ed8' : '#60a5fa';
+        // White for dark mode, teal for light mode (not blue to avoid conflict)
+        ctx.fillStyle = isLight ? '#0d9488' : '#ffffff';
         ctx.fill();
         
         // Use darker color for light theme visibility
-        ctx.fillStyle = isLight ? '#1e3a8a' : '#ffffff';
+        ctx.fillStyle = isLight ? '#0f766e' : '#e2e8f0';
         ctx.font = '10px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
