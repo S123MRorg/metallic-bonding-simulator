@@ -938,7 +938,7 @@ export default function App() {
                       <span className={`text-sm ${textSecondary}`}>Animation Speed</span>
                       <div className="group relative">
                         <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-slate-200'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50`}>
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                           Controls how fast delocalized electrons move. In real metals, electrons move at ~1,000,000 m/s (Fermi velocity), represented by 10x speed.
                         </div>
                       </div>
@@ -967,7 +967,7 @@ export default function App() {
                       <span className={`text-sm ${textSecondary}`}>Temperature</span>
                       <div className="group relative">
                         <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                           Higher temperature increases cation vibration amplitude and electron kinetic energy. This demonstrates thermal expansion and heat conduction.
                         </div>
                       </div>
@@ -994,7 +994,7 @@ export default function App() {
                         <span className={`text-sm ${textSecondary}`}>Voltage</span>
                         <div className="group relative">
                           <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                          <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                          <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                             Voltage creates an electric field that applies force on electrons, causing them to drift toward the positive terminal. Higher voltage = stronger force = faster electron flow.
                           </div>
                         </div>
@@ -1020,7 +1020,7 @@ export default function App() {
                     <span className={`text-sm ${textSecondary}`}>Particle Spawner</span>
                     <div className="group relative">
                       <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                         Enable this and click anywhere on the metal to add more delocalized electrons. Great for exploring electron density effects!
                       </div>
                     </div>
@@ -1049,7 +1049,7 @@ export default function App() {
                     <span className={`text-sm ${textSecondary}`}>Electron Trails</span>
                     <div className="group relative">
                       <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                         Visualize the paths electrons take as they move through the metal. Shows the random walk motion characteristic of thermal motion.
                       </div>
                     </div>
@@ -1078,7 +1078,7 @@ export default function App() {
                     <span className={`text-sm ${textSecondary}`}>Crystal Structure</span>
                     <div className="group relative">
                       <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-800'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg`}>
+                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
                         Square: Simple cubic arrangement | Hexagonal: Close-packed like magnesium | FCC: Face-centered cubic like copper - densest packing!
                       </div>
                     </div>
@@ -1093,8 +1093,8 @@ export default function App() {
                         }}
                         className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 ${
                           crystalStructure === structure
-                            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                            : `${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} ${isDark ? 'text-slate-400' : 'text-slate-600'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`
+                            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-500'
+                            : `${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'} ${isDark ? 'text-slate-300' : 'text-slate-600'} ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`
                         } border`}
                       >
                         {structure === 'fcc' ? 'FCC' : structure.charAt(0).toUpperCase() + structure.slice(1)}

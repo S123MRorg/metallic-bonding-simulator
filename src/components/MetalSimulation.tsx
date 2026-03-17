@@ -59,22 +59,27 @@ const SPACING_X = CANVAS_WIDTH / (COLS + 1);
 const SPACING_Y = CANVAS_HEIGHT / (ROWS + 1);
 
 function getWirePos(progress: number, exitY: number, entryY: number) {
-  if (progress < 30) return { x: 450, y: exitY + (175 - exitY) * (progress / 30) };
-  progress -= 30;
+  // More realistic circuit path with proper proportions
+  // Total path ~1100 units
+  // Path: metal -> right -> down -> left (through battery) -> up -> metal
+  if (progress < 40) return { x: 480, y: exitY + (200 - exitY) * (progress / 40) };
+  progress -= 40;
   
-  if (progress < 70) return { x: 450 + progress, y: 175 };
-  progress -= 70;
-  if (progress < 145) return { x: 520, y: 175 + progress };
-  progress -= 145;
-  if (progress < 440) return { x: 520 - progress, y: 320 };
-  progress -= 440;
-  if (progress < 145) return { x: 80, y: 320 - progress };
-  progress -= 145;
-  if (progress < 70) return { x: 80 + progress, y: 175 };
-  progress -= 70;
+  if (progress < 100) return { x: 480 + progress, y: 200 };  // right to x=580
+  progress -= 100;
+  if (progress < 160) return { x: 580, y: 200 + progress };  // down to y=360
+  progress -= 160;
+  if (progress < 250) return { x: 580 - progress * 1.0, y: 360 };  // left to x=330 (battery positive)
+  progress -= 250;
+  if (progress < 60) return { x: 330 - progress * 1.0, y: 360 };  // through battery to x=270
+  progress -= 60;
+  if (progress < 90) return { x: 270 - progress, y: 360 };  // continue left to x=180
+  progress -= 90;
+  if (progress < 160) return { x: 180, y: 360 - progress };  // up to y=200
+  progress -= 160;
   
-  if (progress < 30) return { x: 150, y: 175 + (entryY - 175) * (progress / 30) };
-  return { x: 150, y: entryY };
+  if (progress < 40) return { x: 180, y: 200 + (entryY - 200) * (progress / 40) };
+  return { x: 180, y: entryY };
 }
 
 export default function MetalSimulation({ 
@@ -128,7 +133,7 @@ export default function MetalSimulation({
     if (cationsRef.current.length === 0 || lastLayoutRef.current !== layoutType) {
       lastLayoutRef.current = layoutType;
       
-      const bounds = isCircuit ? { x: 150, y: 100, w: 300, h: 150 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+      const bounds = isCircuit ? { x: 180, y: 80, w: 400, h: 120 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
       const rows = isCircuit ? 3 : ROWS;
       const cols = isCircuit ? 6 : COLS;
       const spacingX = bounds.w / (cols + 1);
@@ -200,7 +205,7 @@ export default function MetalSimulation({
     if (cationsRef.current.length === 0) return;
     
     const isCircuit = mode === 'circuit';
-    const bounds = isCircuit ? { x: 150, y: 100, w: 300, h: 150 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+    const bounds = isCircuit ? { x: 180, y: 80, w: 400, h: 120 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
     const rows = isCircuit ? 3 : ROWS;
     const cols = isCircuit ? 6 : COLS;
     
@@ -292,7 +297,7 @@ export default function MetalSimulation({
       const cations = cationsRef.current;
       const electrons = electronsRef.current;
       const isCircuit = mode === 'circuit';
-      const bounds = isCircuit ? { x: 150, y: 100, w: 300, h: 150 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+      const bounds = isCircuit ? { x: 180, y: 80, w: 400, h: 120 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
 
       let targetZoom = 1;
       let targetCamX = CANVAS_WIDTH / 2;
@@ -400,7 +405,7 @@ export default function MetalSimulation({
           if (e.state === 'wire') {
              // Move along wire
              e.wireProgress! += 4 * dt; // wire speed
-             if (e.wireProgress! >= 930) {
+             if (e.wireProgress! >= 900) {
                 e.state = 'metal';
                 e.x = 150;
                 e.y = e.entryY!;
@@ -499,70 +504,72 @@ export default function MetalSimulation({
       ctx.translate(-camRef.current.x, -camRef.current.y);
 
       if (mode === 'heat') {
-        const gradient = ctx.createLinearGradient(0, 0, 150, 0);
-        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)'); // red-500
+        // Heat source gradient - wider for better visualization
+        const gradient = ctx.createLinearGradient(0, 0, 220, 0);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.5)'); // red-500
+        gradient.addColorStop(0.3, 'rgba(239, 68, 68, 0.25)');
         gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 150, CANVAS_HEIGHT);
+        ctx.fillRect(0, 0, 220, CANVAS_HEIGHT);
       }
 
       if (isCircuit) {
-        // Draw wires
+        // Draw wires - more realistic circuit layout
         ctx.strokeStyle = '#94a3b8'; // slate-400
         ctx.lineWidth = 4;
         ctx.beginPath();
-        // Right wire
-        ctx.moveTo(450, 175);
-        ctx.lineTo(520, 175);
-        ctx.lineTo(520, 320);
-        ctx.lineTo(350, 320); // to battery
-        // Left wire
-        ctx.moveTo(250, 320); // from battery
-        ctx.lineTo(80, 320);
-        ctx.lineTo(80, 175);
-        ctx.lineTo(150, 175);
+        // Right wire (from metal to bulb)
+        ctx.moveTo(480, 200);
+        ctx.lineTo(580, 200);
+        ctx.lineTo(580, 360);
+        ctx.lineTo(330, 360); // to battery positive
+        // Left wire (from battery negative)
+        ctx.moveTo(270, 360); // from battery
+        ctx.lineTo(180, 360);
+        ctx.lineTo(180, 200);
+        ctx.lineTo(180, 200);
         ctx.stroke();
 
-        // Draw Electrodes
+        // Draw Electrodes - positioned to match cation grid
         ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(146, 100, 4, 150);
-        ctx.fillRect(450, 100, 4, 150);
+        ctx.fillRect(176, 80, 4, 120);  // left electrode
+        ctx.fillRect(480, 80, 4, 120);  // right electrode
 
-        // Draw Battery
+        // Draw Battery - centered at bottom
         ctx.fillStyle = '#334155';
-        ctx.fillRect(250, 300, 100, 40);
+        ctx.fillRect(250, 340, 100, 40);  // battery body
         ctx.fillStyle = '#ef4444'; // positive terminal
-        ctx.fillRect(350, 310, 10, 20);
+        ctx.fillRect(350, 350, 10, 20);
         ctx.fillStyle = '#cbd5e1'; // negative terminal
-        ctx.fillRect(240, 310, 10, 20);
+        ctx.fillRect(240, 350, 10, 20);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Inter';
+        ctx.font = 'bold 14px Inter';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('BATTERY', 300, 320);
-        ctx.font = 'bold 20px Inter';
-        ctx.fillText('+', 345, 320);
-        ctx.fillText('-', 255, 320);
+        ctx.fillText('BATTERY', 300, 360);
+        ctx.font = 'bold 18px Inter';
+        ctx.fillText('+', 345, 360);
+        ctx.fillText('-', 255, 360);
 
-        // Draw Light Bulb
+        // Draw Light Bulb - on the right side
         ctx.fillStyle = '#fbbf24'; // amber-400 (glowing)
         ctx.beginPath();
-        ctx.arc(520, 247, 20, 0, Math.PI * 2);
+        ctx.arc(580, 280, 24, 0, Math.PI * 2);  // slightly larger bulb
         ctx.fill();
         // Bulb glow
         ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
         ctx.fill();
         ctx.shadowBlur = 0; // reset
         
         // Bulb base
         ctx.fillStyle = '#64748b';
-        ctx.fillRect(510, 267, 20, 15);
+        ctx.fillRect(570, 304, 20, 18);
 
         // Draw Metal Background
         const metalBgColor = isLight ? '#e2e8f0' : '#0f172a'; // lighter slate for light mode
-        ctx.fillStyle = metalBgColor; // darker slate for metal background
+        ctx.fillStyle = metalBgColor;
         ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
         ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
         ctx.lineWidth = 2;
@@ -572,7 +579,7 @@ export default function MetalSimulation({
         ctx.fillStyle = isLight ? '#475569' : '#64748b';
         ctx.font = '12px Inter';
         ctx.textAlign = 'left';
-        ctx.fillText('METAL WIRE / MATERIAL', bounds.x + 10, bounds.y - 10);
+        ctx.fillText('METAL WIRE / MATERIAL', bounds.x + 10, bounds.y - 8);
       }
 
       // Draw Cations
@@ -672,29 +679,29 @@ export default function MetalSimulation({
 
       ctx.restore();
 
-      // Draw Overlay Text for Heat Mode
+      // Draw Overlay Text for Heat Mode - more compact info panel
       if (mode === 'heat' && overlayTitle) {
         ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)'; // slate-50 for light, slate-900 for dark
-        ctx.fillRect(20, CANVAS_HEIGHT - 90, CANVAS_WIDTH - 40, 70);
+        ctx.fillRect(20, CANVAS_HEIGHT - 80, CANVAS_WIDTH - 40, 60);  // smaller panel
         ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
         ctx.lineWidth = 2;
-        ctx.strokeRect(20, CANVAS_HEIGHT - 90, CANVAS_WIDTH - 40, 70);
+        ctx.strokeRect(20, CANVAS_HEIGHT - 80, CANVAS_WIDTH - 40, 60);
 
         ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc'; // slate-900 for light, slate-50 for dark
-        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.font = 'bold 15px Inter, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(overlayTitle, 40, CANVAS_HEIGHT - 75);
+        ctx.fillText(overlayTitle, 40, CANVAS_HEIGHT - 70);
 
         ctx.fillStyle = isLight ? '#64748b' : '#94a3b8'; // slate-500 for light, slate-400 for dark
-        ctx.font = '14px Inter, sans-serif';
-        ctx.fillText(overlayText, 40, CANVAS_HEIGHT - 50, CANVAS_WIDTH - 80);
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText(overlayText, 40, CANVAS_HEIGHT - 48, CANVAS_WIDTH - 80);
         
-        // Progress bar
+        // Progress bar - thinner
         const totalDuration = 24; // 24 seconds total loop
         const progress = (heatTimeRef.current % totalDuration) / totalDuration;
         ctx.fillStyle = '#ef4444'; // red-500
-        ctx.fillRect(20, CANVAS_HEIGHT - 20, (CANVAS_WIDTH - 40) * progress, 4);
+        ctx.fillRect(20, CANVAS_HEIGHT - 20, (CANVAS_WIDTH - 40) * progress, 3);  // thinner bar
       }
 
       // Handle GIF Recording
