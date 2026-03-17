@@ -48,8 +48,8 @@ interface Props {
   theme?: 'light' | 'dark'; // Theme prop for canvas colors
 }
 
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 400;
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 800;
 const MAX_RECORD_FRAMES = 480; // 240 frames at 30fps = 8 seconds.
 const CATION_RADIUS = 20;
 const ELECTRON_RADIUS = 5;
