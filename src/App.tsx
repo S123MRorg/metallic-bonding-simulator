@@ -699,7 +699,7 @@ export default function App() {
                 {/* Electron Trails */}
                 <div className={`flex items-center justify-between py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2">
-                    <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                    <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-blue-500'}`} />
                     <span className={`text-sm ${textSecondary}`}>Electron Trails</span>
                     <div className="group relative">
                       <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
@@ -714,7 +714,7 @@ export default function App() {
                       if (!showTrails) trackFeature('trail_enable');
                     }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      showTrails ? 'bg-purple-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
+                      showTrails ? (isDark ? 'bg-purple-500' : 'bg-blue-500') : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                     }`}
                   >
                     <span
@@ -827,9 +827,9 @@ export default function App() {
         >
           {/* Quick Controls Bar - Animation Speed, Temperature, Electron Trails */}
           <div 
-            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4`}
+            className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'py-2 px-3' : ''}`}
           >
-            <div className="flex flex-wrap items-center gap-6">
+            <div className={`flex flex-wrap items-center gap-6 ${isFullscreen ? 'gap-4' : ''}`}>
               {/* Animation Speed */}
               <div className="flex items-center gap-2 flex-1 min-w-[140px]">
                 <span className={`text-xs ${textMuted} whitespace-nowrap`}>Speed</span>
@@ -875,7 +875,7 @@ export default function App() {
 
               {/* Electron Trails Toggle */}
               <div className="flex items-center gap-2">
-                <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-blue-500'}`} />
                 <span className={`text-xs ${textMuted}`}>Trails</span>
                 <div className="group relative">
                   <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
@@ -889,7 +889,7 @@ export default function App() {
                     if (!showTrails) trackFeature('trail_enable');
                   }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    showTrails ? 'bg-purple-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
+                    showTrails ? (isDark ? 'bg-purple-500' : 'bg-blue-500') : (isDark ? 'bg-slate-600' : 'bg-slate-300')
                   }`}
                 >
                   <span
@@ -903,7 +903,7 @@ export default function App() {
           </div>
 
           {/* Simulation Canvas */}
-          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden mt-4`}>
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-2 sm:p-6 flex-grow flex flex-col items-center justify-center relative overflow-hidden ${isFullscreen ? '!p-1 !mt-2 min-h-[60vh]' : 'mt-4'}`}>
             {/* Fullscreen Toggle Button */}
             <button
               onClick={toggleFullscreen}
@@ -956,6 +956,8 @@ export default function App() {
             </div>
           </div>
           
+          {/* Description Box - Hidden in fullscreen mode */}
+          {!isFullscreen && (
           <div className={`mt-6 ${bgCard} border ${borderColor}/50 rounded-2xl p-6`}>
             <h3 className={`text-lg font-medium ${textPrimary} mb-2`}>
               {mode === 'normal' && "The 'Sea of Electrons' Model"}
@@ -972,6 +974,7 @@ export default function App() {
               {mode === 'heat' && "Heating a metal causes its cations to vibrate with increasing intensity. This added kinetic energy spreads through the crystal lattice through coordinated vibrations and is also carried across the metal by the rapidly moving delocalized electrons, enabling efficient thermal conduction."}
             </p>
           </div>
+          )}
         </div>
         </div>
       </main>
