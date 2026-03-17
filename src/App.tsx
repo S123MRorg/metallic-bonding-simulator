@@ -965,32 +965,60 @@ export default function App() {
             {showAdvanced && (
               <div className="px-6 pb-6 space-y-4 animate-fade-in">
 
-                {mode === 'malleable' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Clock className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-500'}`} />
-                        <span className={`text-sm ${textSecondary}`}>Auto Demo Speed</span>
-                        <div className="group relative">
-                          <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                          <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                            Controls how fast the auto-demonstration animates. Adjust between 0.5x (slow) to 5x (fast).
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`text-xs ${textMuted}`}>{autoDemoSpeed.toFixed(1)}x</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="0.5" 
-                      max="5" 
-                      step="0.1"
-                      value={autoDemoSpeed} 
-                      onChange={(e) => setAutoDemoSpeed(Number(e.target.value))}
-                      className="w-full accent-cyan-500"
-                    />
-                  </div>
-                )}
+                 {mode === 'malleable' && (
+                   <div>
+                     <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center gap-2">
+                         <Clock className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-500'}`} />
+                         <span className={`text-sm ${textSecondary}`}>Auto Demo Speed</span>
+                         <div className="group relative">
+                           <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                           <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
+                             Controls how fast the auto-demonstration animates. Adjust between 0.5x (slow) to 5x (fast).
+                           </div>
+                         </div>
+                       </div>
+                       <span className={`text-xs ${textMuted}`}>{autoDemoSpeed.toFixed(1)}x</span>
+                     </div>
+                     <input 
+                       type="range" 
+                       min="0.5" 
+                       max="5" 
+                       step="0.1"
+                       value={autoDemoSpeed} 
+                       onChange={(e) => setAutoDemoSpeed(Number(e.target.value))}
+                       className="w-full accent-cyan-500"
+                     />
+                   </div>
+                 )}
+                 
+                 {/* Voltage Control */}
+                 {(mode === 'electrical' || mode === 'circuit') && (
+                   <div>
+                     <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center gap-2">
+                         <VoltageIcon className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                         <span className={`text-sm ${textSecondary}`}>Voltage</span>
+                         <div className="group relative">
+                           <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                           <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
+                             Voltage creates an electric field that applies force on electrons, causing them to drift toward the positive terminal. Higher voltage = stronger force = faster electron flow.
+                           </div>
+                         </div>
+                       </div>
+                       <span className={`text-xs ${textMuted}`}>{voltage}V</span>
+                     </div>
+                     <input 
+                       type="range" 
+                       min="0" 
+                       max="100" 
+                       step="1"
+                       value={voltage} 
+                       onChange={(e) => setVoltage(Number(e.target.value))}
+                       className="w-full accent-amber-500"
+                     />
+                   </div>
+                 )}
 
                 {/* Particle Spawner */}
                 <div className={`flex items-center justify-between py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
@@ -1021,34 +1049,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Electron Trails */}
-                <div className={`flex items-center justify-between py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
-                  <div className="flex items-center gap-2">
-                    <Eye className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-blue-600'}`} />
-                    <span className={`text-sm ${textSecondary}`}>Electron Trails</span>
-                    <div className="group relative">
-                      <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
-                      <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                        Visualize the paths electrons take as they move through the metal. Shows the random walk motion characteristic of thermal motion.
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowTrails(!showTrails);
-                      if (!showTrails) trackFeature('trail_enable');
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      showTrails ? (isDark ? 'bg-purple-500' : 'bg-blue-500') : (isDark ? 'bg-slate-600' : 'bg-slate-300')
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        showTrails ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
+
 
                 {/* Crystal Structure */}
                 <div className={`py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
