@@ -698,6 +698,16 @@ export default function App() {
   const modalBorder = isDark ? 'border-slate-700' : 'border-slate-200';
   const inputBg = isDark ? 'bg-slate-800' : 'bg-slate-100';
   
+  // Quiz-specific theme variables
+  const quizOverlayBg = isDark ? 'bg-slate-950/80' : 'bg-slate-900/50';
+  const quizCorrectBg = isDark ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-emerald-100 border-emerald-500 text-emerald-700';
+  const quizIncorrectBg = isDark ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-red-100 border-red-500 text-red-700';
+  const quizSelectedBg = isDark ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-blue-100 border-blue-500 text-blue-700';
+  const quizOptionBg = isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-600 text-slate-300' : 'bg-white border-slate-300 hover:border-blue-400 text-slate-700 hover:shadow-md';
+  const quizButtonBg = isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-blue-600 hover:bg-blue-500';
+  const quizSecondaryButtonBg = isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300';
+  const quizProgressBg = isDark ? 'bg-slate-800' : 'bg-slate-200';
+  
   return (
     <div className={`min-h-screen ${bgPrimary} ${textPrimary} font-sans selection:bg-blue-500/30 transition-colors duration-300`}>
       {/* Achievement Popup */}
@@ -911,7 +921,7 @@ export default function App() {
           </div>
 
           {/* Advanced Features Dropdown */}
-          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl overflow-hidden transition-all duration-300 card-hover`}>
+          <div className={`${bgCard} border ${borderColor}/50 rounded-2xl overflow-hidden transition-all duration-300 card-hover sticky top-0 z-10`}>
             <button
               onClick={() => setShowAdvanced(!showAdvanced)}
               className={`w-full flex items-center justify-between p-5 ${isDark ? 'hover:bg-slate-700/70' : 'hover:bg-slate-100/80'} transition-all duration-200 rounded-t-2xl group`}
@@ -1332,7 +1342,7 @@ export default function App() {
 
       {/* Quiz Modal - With Category Selection */}
       {showQuiz && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${overlayBg} backdrop-blur-sm transition-colors duration-300`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${quizOverlayBg} backdrop-blur-sm transition-colors duration-300`}>
           <div className={`${modalBg} border ${modalBorder} rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in`}>
             <div className={`sticky top-0 ${modalBg}/90 backdrop-blur-md border-b ${modalBorder} p-6 flex items-center justify-between`}>
               <h2 className={`text-xl font-semibold ${textPrimary} flex items-center gap-2`}>
@@ -1354,10 +1364,10 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => startQuizWithCategory('basic')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-blue-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-blue-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-blue-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Zap className="w-4 h-4 text-blue-400" />
+                      <Zap className="w-4 h-4 text-blue-500" />
                       <span className={`font-medium ${textPrimary}`}>Basic Concepts</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>{basicQuestions.length} questions</span>
@@ -1365,10 +1375,10 @@ export default function App() {
                   
                   <button
                     onClick={() => startQuizWithCategory('electrical')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-amber-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-amber-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-amber-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Zap className="w-4 h-4 text-amber-400" />
+                      <Zap className="w-4 h-4 text-amber-500" />
                       <span className={`font-medium ${textPrimary}`}>Electrical</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>{electricalQuestions.length} questions</span>
@@ -1376,10 +1386,10 @@ export default function App() {
                   
                   <button
                     onClick={() => startQuizWithCategory('heat')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-rose-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-rose-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-rose-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-rose-500 hover:bg-rose-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Flame className="w-4 h-4 text-rose-400" />
+                      <Flame className="w-4 h-4 text-rose-500" />
                       <span className={`font-medium ${textPrimary}`}>Heat Conductivity</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>{heatQuestions.length} questions</span>
@@ -1387,10 +1397,10 @@ export default function App() {
                   
                   <button
                     onClick={() => startQuizWithCategory('malleability')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-emerald-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-emerald-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-emerald-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Move className="w-4 h-4 text-emerald-400" />
+                      <Move className="w-4 h-4 text-emerald-500" />
                       <span className={`font-medium ${textPrimary}`}>Malleability</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>{malleabilityQuestions.length} questions</span>
@@ -1398,10 +1408,10 @@ export default function App() {
                   
                   <button
                     onClick={() => startQuizWithCategory('alloys')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-amber-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-amber-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-amber-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Gem className="w-4 h-4 text-amber-400" />
+                      <Gem className="w-4 h-4 text-amber-500" />
                       <span className={`font-medium ${textPrimary}`}>Alloys</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>{alloyQuestions.length} questions</span>
@@ -1409,10 +1419,10 @@ export default function App() {
                   
                   <button
                     onClick={() => startQuizWithCategory('mixed')}
-                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-purple-500 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 hover:border-purple-400 hover:bg-slate-200'} text-left`}
+                    className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-95 ${isDark ? 'bg-slate-800 border-slate-700 hover:border-purple-500 hover:bg-slate-700' : 'bg-white border-slate-300 hover:border-purple-500 hover:bg-purple-50 hover:shadow-md'} text-left`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Sparkles className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-blue-600'}`} />
+                      <Sparkles className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                       <span className={`font-medium ${textPrimary}`}>Mixed Challenge</span>
                     </div>
                     <span className={`text-xs ${textMuted}`}>10 random questions</span>
@@ -1436,13 +1446,13 @@ export default function App() {
                 <div className="flex gap-3 justify-center">
                   <button
                     onClick={handleBackToCategories}
-                    className={`px-6 py-3 ${isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300'} rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95`}
+                    className={`px-6 py-3 ${quizSecondaryButtonBg} rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 ${textPrimary}`}
                   >
                     Other Categories
                   </button>
                   <button
                     onClick={handleRestartQuiz}
-                    className={`px-6 py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 text-white`}
+                    className={`px-6 py-3 ${quizButtonBg} rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 text-white`}
                   >
                     Try Again
                   </button>
@@ -1462,7 +1472,7 @@ export default function App() {
                 </div>
                 
                 {/* Progress bar */}
-                <div className={`h-2 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} rounded-full mb-6 overflow-hidden`}>
+                <div className={`h-2 ${quizProgressBg} rounded-full mb-6 overflow-hidden`}>
                   <div 
                     className="h-full bg-purple-500 transition-all duration-500 ease-out animate-pulse-subtle"
                     style={{ width: `${((currentQuestion + 1) / activeQuizQuestions.length) * 100}%` }}
@@ -1483,12 +1493,12 @@ export default function App() {
                         selectedAnswer === index
                           ? showExplanation
                             ? index === activeQuizQuestions[currentQuestion].correct
-                              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                              : 'bg-red-500/20 border-red-500 text-red-400'
-                            : `${isDark ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-blue-500/20 border-blue-500 text-blue-600'}`
+                              ? quizCorrectBg
+                              : quizIncorrectBg
+                            : quizSelectedBg
                           : showExplanation && index === activeQuizQuestions[currentQuestion].correct
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                          : `${isDark ? 'bg-slate-800 border-slate-700 hover:border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 hover:border-slate-400 text-slate-700'}`
+                          ? quizCorrectBg
+                          : quizOptionBg
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -1496,9 +1506,9 @@ export default function App() {
                           selectedAnswer === index
                             ? showExplanation
                               ? index === activeQuizQuestions[currentQuestion].correct
-                                ? 'border-emerald-500 bg-emerald-500'
-                                : 'border-red-500 bg-red-500'
-                              : 'border-purple-500 bg-purple-500'
+                                ? isDark ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-emerald-500 bg-emerald-500 text-white'
+                                : isDark ? 'border-red-500 bg-red-500 text-white' : 'border-red-500 bg-red-500 text-white'
+                              : isDark ? 'border-purple-500 bg-purple-500 text-white' : 'border-blue-500 bg-blue-500 text-white'
                             : isDark ? 'border-slate-600' : 'border-slate-400'
                         }`}>
                           {showExplanation && index === activeQuizQuestions[currentQuestion].correct && <Check className="w-4 h-4" />}
@@ -1511,7 +1521,7 @@ export default function App() {
                 </div>
 
                 {showExplanation && (
-                  <div className={`border rounded-xl p-4 mb-4 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`border rounded-xl p-4 mb-4 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-blue-50 border-blue-200'}`}>
                     <p className={textSecondary}>
                       <span className={`${isDark ? 'text-purple-400' : 'text-blue-600'} font-medium`}>Explanation: </span>
                       {activeQuizQuestions[currentQuestion].explanation}
@@ -1523,14 +1533,14 @@ export default function App() {
                   <button
                     onClick={handleCheckAnswer}
                     disabled={selectedAnswer === null}
-                    className={`w-full py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} ${isDark ? 'disabled:bg-slate-700 disabled:text-slate-500' : 'disabled:bg-slate-300 disabled:text-slate-500'} rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 text-white`}
+                    className={`w-full py-3 ${quizButtonBg} ${isDark ? 'disabled:bg-slate-700 disabled:text-slate-500' : 'disabled:bg-slate-300 disabled:text-slate-500'} rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 text-white`}
                   >
                     Check Answer
                   </button>
                 ) : (
                   <button
                     onClick={handleNextQuestion}
-                    className={`w-full py-3 ${isDark ? 'bg-purple-600 hover:bg-purple-500' : 'bg-violet-600 hover:bg-violet-500'} rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 text-white`}
+                    className={`w-full py-3 ${quizButtonBg} rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 text-white`}
                   >
                     {currentQuestion < activeQuizQuestions.length - 1 ? 'Next Question' : 'See Results'}
                   </button>
