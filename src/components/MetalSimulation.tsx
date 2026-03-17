@@ -60,43 +60,43 @@ const SPACING_X = CANVAS_WIDTH / (COLS + 1);
 const SPACING_Y = CANVAS_HEIGHT / (ROWS + 1);
 
 function getWirePos(progress: number, exitY: number, entryY: number) {
-  // Updated circuit path with better proportions
-  // Path: metal (right side, x=740) -> down to bulb -> right to battery -> left through battery -> up to left side of metal (x=600) -> back to metal
+  // Updated circuit path with improved proportions
+  // Path: metal (right side, x=600) -> down to wire level -> right to bulb -> down through bulb -> left to battery -> through battery -> up -> right to left side of metal -> back to metal
   
   // Exit from right side of metal (y = exitY)
-  if (progress < 30) return { x: 740, y: exitY + (350 - exitY) * (progress / 30) };
+  if (progress < 30) return { x: 600, y: exitY + (360 - exitY) * (progress / 30) };
   progress -= 30;
   
-  // Go down from metal to bulb level
-  if (progress < 50) return { x: 740, y: 350 + progress };  // down to y=400
-  progress -= 50;
+  // Go down from metal to wire level
+  if (progress < 80) return { x: 600, y: 360 + progress * 0 };  // stay at y=360
+  progress -= 80;
   
   // Go right to bulb position
-  if (progress < 110) return { x: 740 + progress, y: 400 };  // right to x=850 (bulb)
-  progress -= 110;
+  if (progress < 280) return { x: 600 + progress, y: 360 };  // right to x=880 (bulb)
+  progress -= 280;
   
   // Go down through bulb to battery level
-  if (progress < 50) return { x: 850, y: 400 + progress };  // down to y=450
-  progress -= 50;
-  
-  // Go left to battery positive
-  if (progress < 400) return { x: 850 - progress, y: 450 };  // left to x=450 (battery positive)
-  progress -= 400;
-  
-  // Go through battery
-  if (progress < 100) return { x: 450 - progress, y: 450 };  // left through battery to x=350
+  if (progress < 100) return { x: 880, y: 360 + progress };  // down to y=460
   progress -= 100;
   
-  // Go up from battery to left side of metal
-  if (progress < 150) return { x: 350, y: 450 - progress };  // up to y=300
-  progress -= 150;
+  // Go left to battery positive
+  if (progress < 560) return { x: 880 - progress, y: 460 };  // left to x=320 (battery positive)
+  progress -= 560;
+  
+  // Go through battery
+  if (progress < 50) return { x: 320 - progress, y: 460 };  // left through battery to x=270
+  progress -= 50;
+  
+  // Go up from battery to wire level
+  if (progress < 80) return { x: 270, y: 460 - progress * 1.25 };  // up to y=360
+  progress -= 80;
   
   // Go right to left side of metal
-  if (progress < 250) return { x: 350 + progress, y: 300 };  // right to x=600
-  progress -= 250;
+  if (progress < 330) return { x: 270 + progress, y: 360 };  // right to x=600
+  progress -= 330;
   
   // Go up to entry position
-  if (progress < 100) return { x: 600, y: 300 + (entryY - 300) * (progress / 100) };
+  if (progress < 60) return { x: 600, y: 360 + (entryY - 360) * (progress / 60) };
   return { x: 600, y: entryY };
 }
 
@@ -538,20 +538,20 @@ export default function MetalSimulation({
       }
 
       if (isCircuit) {
-        // Draw wires - more realistic circuit layout with better proportions
+        // Draw wires - improved circuit layout with better proportions and centering
         ctx.strokeStyle = '#94a3b8'; // slate-400
         ctx.lineWidth = 6;
         ctx.beginPath();
         // Right wire (from metal to bulb) - going down from right side of metal
         ctx.moveTo(600, 280);
-        ctx.lineTo(600, 350);
-        ctx.lineTo(850, 350);  // to bulb position
-        ctx.lineTo(850, 450);  // down through bulb
-        ctx.lineTo(450, 450);  // to battery positive
+        ctx.lineTo(600, 360);
+        ctx.lineTo(880, 360);  // to bulb position - moved right
+        ctx.lineTo(880, 460);  // down through bulb
+        ctx.lineTo(320, 460);  // to battery positive - moved left
         // Left wire (from battery negative)
-        ctx.moveTo(350, 450); // from battery
-        ctx.lineTo(350, 350);
-        ctx.lineTo(600, 350);  // up to left side of metal
+        ctx.moveTo(320, 540); // from battery
+        ctx.lineTo(320, 360);
+        ctx.lineTo(600, 360);  // up to left side of metal
         ctx.lineTo(600, 280);
         ctx.stroke();
 
@@ -560,27 +560,27 @@ export default function MetalSimulation({
         ctx.fillRect(596, 160, 8, 240);  // left electrode
         ctx.fillRect(740, 160, 8, 240);  // right electrode
 
-        // Draw Battery - centered at bottom
+        // Draw Battery - centered at bottom with better spacing
         ctx.fillStyle = '#334155';
-        ctx.fillRect(350, 500, 150, 60);  // battery body - larger
+        ctx.fillRect(270, 540, 150, 60);  // battery body - moved up slightly
         ctx.fillStyle = '#ef4444'; // positive terminal
-        ctx.fillRect(500, 520, 15, 30);
+        ctx.fillRect(420, 560, 15, 30);
         ctx.fillStyle = '#cbd5e1'; // negative terminal
-        ctx.fillRect(335, 520, 15, 30);
+        ctx.fillRect(255, 560, 15, 30);
         
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px Inter';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('BATTERY', 425, 530);
+        ctx.fillText('BATTERY', 345, 570);
         ctx.font = 'bold 24px Inter';
-        ctx.fillText('+', 492, 535);
-        ctx.fillText('-', 358, 535);
+        ctx.fillText('+', 412, 575);
+        ctx.fillText('-', 278, 575);
 
-        // Draw Light Bulb - on the right side - larger and better positioned
+        // Draw Light Bulb - on the right side - better positioned
         ctx.fillStyle = '#fbbf24'; // amber-400 (glowing)
         ctx.beginPath();
-        ctx.arc(850, 400, 40, 0, Math.PI * 2);  // larger bulb
+        ctx.arc(880, 410, 40, 0, Math.PI * 2);  // larger bulb - moved right
         ctx.fill();
         // Bulb glow
         ctx.shadowColor = '#fbbf24';
@@ -590,15 +590,15 @@ export default function MetalSimulation({
         
         // Bulb base
         ctx.fillStyle = '#64748b';
-        ctx.fillRect(835, 440, 30, 25);
+        ctx.fillRect(865, 450, 30, 25);
         // Bulb filament
         ctx.strokeStyle = '#fcd34d';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(840, 440);
-        ctx.lineTo(845, 420);
-        ctx.lineTo(855, 420);
-        ctx.lineTo(860, 440);
+        ctx.moveTo(870, 450);
+        ctx.lineTo(875, 430);
+        ctx.lineTo(885, 430);
+        ctx.lineTo(890, 450);
         ctx.stroke();
 
         // Draw Metal Background - larger and centered
@@ -713,29 +713,29 @@ export default function MetalSimulation({
 
       ctx.restore();
 
-      // Draw Overlay Text for Heat Mode - more compact info panel
+      // Draw Overlay Text for Heat Mode - larger info panel for better readability
       if (mode === 'heat' && overlayTitle) {
         ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)'; // slate-50 for light, slate-900 for dark
-        ctx.fillRect(20, CANVAS_HEIGHT - 110, CANVAS_WIDTH - 40, 80);  // taller panel for better proportion
+        ctx.fillRect(20, CANVAS_HEIGHT - 130, CANVAS_WIDTH - 40, 100);  // taller panel for better readability
         ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
         ctx.lineWidth = 2;
-        ctx.strokeRect(20, CANVAS_HEIGHT - 110, CANVAS_WIDTH - 40, 80);
+        ctx.strokeRect(20, CANVAS_HEIGHT - 130, CANVAS_WIDTH - 40, 100);
 
         ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc'; // slate-900 for light, slate-50 for dark
-        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.font = 'bold 22px Inter, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(overlayTitle, 40, CANVAS_HEIGHT - 100);
+        ctx.fillText(overlayTitle, 40, CANVAS_HEIGHT - 118);
 
         ctx.fillStyle = isLight ? '#64748b' : '#94a3b8'; // slate-500 for light, slate-400 for dark
-        ctx.font = '14px Inter, sans-serif';
-        ctx.fillText(overlayText, 40, CANVAS_HEIGHT - 75, CANVAS_WIDTH - 80);
+        ctx.font = '16px Inter, sans-serif';
+        ctx.fillText(overlayText, 40, CANVAS_HEIGHT - 88, CANVAS_WIDTH - 80);
         
         // Progress bar
         const totalDuration = 24; // 24 seconds total loop
         const progress = (heatTimeRef.current % totalDuration) / totalDuration;
         ctx.fillStyle = '#ef4444'; // red-500
-        ctx.fillRect(20, CANVAS_HEIGHT - 30, (CANVAS_WIDTH - 40) * progress, 3);  // progress bar at bottom
+        ctx.fillRect(20, CANVAS_HEIGHT - 30, (CANVAS_WIDTH - 40) * progress, 4);  // progress bar at bottom
       }
 
       // Handle GIF Recording

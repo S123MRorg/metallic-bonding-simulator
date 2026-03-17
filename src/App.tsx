@@ -1157,24 +1157,17 @@ export default function App() {
             flexDirection: 'column'
           } : {}}
         >
-          {/* Fullscreen Mode Indicator */}
-          {isFullscreen && (
-            <div className={`absolute top-4 left-4 z-50 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 ${isDark ? 'bg-slate-800/90 text-blue-300' : 'bg-white/90 text-blue-600'} backdrop-blur-sm shadow-lg border ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Full Screen</span>
-            </div>
-          )}
-
           {/* Quick Controls Bar - Animation Speed, Temperature, Electron Trails */}
           <div 
             className={`${bgCard} border ${borderColor}/50 rounded-2xl p-4 ${isFullscreen ? 'mx-0 mt-0 rounded-none border-t-0 border-x-0' : ''}`}
             style={isFullscreen ? { 
               width: '100%', 
               maxWidth: 'none',
-              borderRadius: '0'
+              borderRadius: '0',
+              padding: '12px 24px'
             } : {}}
           >
-            <div className={`flex flex-wrap items-center gap-6 ${isFullscreen ? 'gap-4 max-w-[1600px] mx-auto px-4' : ''}`}>
+            <div className={`flex flex-wrap items-center justify-center gap-6 ${isFullscreen ? 'gap-6' : ''}`}>
               {/* Animation Speed */}
               <div className="flex items-center gap-2 flex-1 min-w-[140px]">
                 <span className={`text-xs ${textMuted} whitespace-nowrap`}>Speed</span>
@@ -1260,7 +1253,7 @@ export default function App() {
             {/* Fullscreen Toggle Button - Enhanced for fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className={`absolute top-4 right-4 z-20 p-2.5 rounded-lg ${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} border ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg ${isFullscreen ? (isDark ? 'bg-red-500/90 hover:bg-red-600 border-red-400 text-white' : 'bg-blue-500/90 hover:bg-blue-600 border-blue-400 text-white') : ''}`}
+              className={`absolute top-4 right-4 z-20 p-2.5 rounded-lg ${bgSecondary} ${isDark ? 'border-slate-700' : 'border-slate-200'} border ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg ${isFullscreen ? 'bg-red-500/90 hover:bg-red-600 border-red-400 text-white' : ''}`}
               title={isFullscreen ? 'Exit Fullscreen (F or Esc)' : 'Fullscreen (F)'}
             >
               {isFullscreen ? (
@@ -1293,7 +1286,7 @@ export default function App() {
             </div>
             
             {/* Legend / Info Overlay */}
-            <div className={`${isFullscreen ? 'absolute bottom-4 left-1/2 -translate-x-1/2' : 'mt-4'} w-full max-w-[800px] flex flex-wrap gap-4 justify-center text-sm ${isFullscreen ? 'bg-black/60 backdrop-blur-md px-4 py-2 rounded-full' : ''}`}>
+            <div className={`${isFullscreen ? 'absolute bottom-4 left-1/2 -translate-x-1/2' : 'mt-4'} w-full max-w-[800px] flex flex-wrap gap-4 justify-center text-sm ${isFullscreen ? (isDark ? 'bg-black/60' : 'bg-white/80') + ' backdrop-blur-md px-4 py-2 rounded-full shadow-lg' : ''}`}>
               <div className="flex items-center gap-2">
                 <div className={`w-4 h-4 rounded-full bg-red-500 border ${isDark ? 'border-red-700' : 'border-red-400'} flex items-center justify-center`}>
                   <span className="text-[8px] font-bold text-white">+</span>
