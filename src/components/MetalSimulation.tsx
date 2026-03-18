@@ -60,44 +60,40 @@ const SPACING_X = CANVAS_WIDTH / (COLS + 1);
 const SPACING_Y = CANVAS_HEIGHT / (ROWS + 1);
 
 function getWirePos(progress: number, exitY: number, entryY: number) {
-  // Updated circuit path with improved proportions
-  // Path: metal (right side, x=600) -> down to wire level -> right to bulb -> down through bulb -> left to battery -> through battery -> up -> right to left side of metal -> back to metal
+  // Path: Metal Right (670, exitY) -> Right (900, exitY) -> Down (900, 600) -> Left (700, 600) [Battery+]
+  //       Battery- (500, 600) -> Left (300, 600) -> Up (300, entryY) -> Right (530, entryY) [Metal Left]
+
+  // 1. Move Right from Metal
+  if (progress < 230) return { x: 670 + progress, y: exitY };
+  progress -= 230;
+
+  // 2. Move Down to Battery Level (passing bulb)
+  // Interpolate Y from exitY to 600
+  const distDown = 600 - exitY;
+  if (progress < distDown) return { x: 900, y: exitY + progress };
+  progress -= distDown;
+
+  // 3. Move Left to Battery (+)
+  if (progress < 200) return { x: 900 - progress, y: 600 };
+  progress -= 200;
+
+  // 4. Through Battery (Teleport/Fast)
+  if (progress < 200) return { x: 700 - progress, y: 600 };
+  progress -= 200;
+
+  // 5. Move Left from Battery (-)
+  if (progress < 200) return { x: 500 - progress, y: 600 };
+  progress -= 200;
+
+  // 6. Move Up to Entry Level
+  const distUp = 600 - entryY;
+  if (progress < distUp) return { x: 300, y: 600 - progress };
+  progress -= distUp;
+
+  // 7. Move Right to Metal
+  if (progress < 230) return { x: 300 + progress, y: entryY };
   
-  // Exit from right side of metal (y = exitY)
-  if (progress < 30) return { x: 600, y: exitY + (360 - exitY) * (progress / 30) };
-  progress -= 30;
-  
-  // Go down from metal to wire level
-  if (progress < 80) return { x: 600, y: 360 + progress * 0 };  // stay at y=360
-  progress -= 80;
-  
-  // Go right to bulb position
-  if (progress < 280) return { x: 600 + progress, y: 360 };  // right to x=880 (bulb)
-  progress -= 280;
-  
-  // Go down through bulb to battery level
-  if (progress < 100) return { x: 880, y: 360 + progress };  // down to y=460
-  progress -= 100;
-  
-  // Go left to battery positive
-  if (progress < 560) return { x: 880 - progress, y: 460 };  // left to x=320 (battery positive)
-  progress -= 560;
-  
-  // Go through battery
-  if (progress < 50) return { x: 320 - progress, y: 460 };  // left through battery to x=270
-  progress -= 50;
-  
-  // Go up from battery to wire level
-  if (progress < 80) return { x: 270, y: 460 - progress * 1.25 };  // up to y=360
-  progress -= 80;
-  
-  // Go right to left side of metal
-  if (progress < 330) return { x: 270 + progress, y: 360 };  // right to x=600
-  progress -= 330;
-  
-  // Go up to entry position
-  if (progress < 60) return { x: 600, y: 360 + (entryY - 360) * (progress / 60) };
-  return { x: 600, y: entryY };
+  return { x: 530, y: entryY };
 }
 
 export default function MetalSimulation({ 
@@ -152,7 +148,7 @@ export default function MetalSimulation({
     if (cationsRef.current.length === 0 || lastLayoutRef.current !== layoutType) {
       lastLayoutRef.current = layoutType;
       
-      const bounds = isCircuit ? { x: 600, y: 160, w: 140, h: 240 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+      const bounds = isCircuit ? { x: 530, y: 180, w: 140, h: 240 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
       const rows = isCircuit ? 5 : ROWS;
       const cols = isCircuit ? 4 : COLS;
       const spacingX = bounds.w / (cols + 1);
@@ -316,7 +312,7 @@ export default function MetalSimulation({
       const cations = cationsRef.current;
       const electrons = electronsRef.current;
       const isCircuit = mode === 'circuit';
-      const bounds = isCircuit ? { x: 180, y: 80, w: 400, h: 120 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+      const bounds = isCircuit ? { x: 530, y: 180, w: 140, h: 240 } : { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
 
       let targetZoom = 1;
       let targetCamX = CANVAS_WIDTH / 2;
@@ -538,71 +534,79 @@ export default function MetalSimulation({
       }
 
       if (isCircuit) {
-        // Draw wires - improved circuit layout with better proportions and centering
+        // Draw wires - Circuit Loop
         ctx.strokeStyle = '#94a3b8'; // slate-400
         ctx.lineWidth = 6;
         ctx.beginPath();
-        // Right wire (from metal to bulb) - going down from right side of metal
-        ctx.moveTo(600, 280);
-        ctx.lineTo(600, 360);
-        ctx.lineTo(880, 360);  // to bulb position - moved right
-        ctx.lineTo(880, 460);  // down through bulb
-        ctx.lineTo(320, 460);  // to battery positive - moved left
-        // Left wire (from battery negative)
-        ctx.moveTo(320, 540); // from battery
-        ctx.lineTo(320, 360);
-        ctx.lineTo(600, 360);  // up to left side of metal
-        ctx.lineTo(600, 280);
+        
+        // Right Wire Path (Metal -> Bulb -> Battery)
+        ctx.moveTo(670, 300); // Metal Right Center
+        ctx.lineTo(900, 300); // Right Corner
+        ctx.lineTo(900, 600); // Bottom Corner
+        ctx.lineTo(700, 600); // Battery Positive
+        
+        // Left Wire Path (Battery -> Metal)
+        ctx.moveTo(500, 600); // Battery Negative
+        ctx.lineTo(300, 600); // Bottom Corner
+        ctx.lineTo(300, 300); // Top Corner
+        ctx.lineTo(530, 300); // Metal Left Center
         ctx.stroke();
 
-        // Draw Electrodes - positioned to match cation grid
+        // Draw Electrodes
         ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(596, 160, 8, 240);  // left electrode
-        ctx.fillRect(740, 160, 8, 240);  // right electrode
+        ctx.fillRect(526, 180, 8, 240);  // Left Electrode (x=530-4)
+        ctx.fillRect(666, 180, 8, 240);  // Right Electrode (x=670-4)
 
-        // Draw Battery - centered at bottom with better spacing
+        // Draw Battery
         ctx.fillStyle = '#334155';
-        ctx.fillRect(270, 540, 150, 60);  // battery body - moved up slightly
-        ctx.fillStyle = '#ef4444'; // positive terminal
-        ctx.fillRect(420, 560, 15, 30);
-        ctx.fillStyle = '#cbd5e1'; // negative terminal
-        ctx.fillRect(255, 560, 15, 30);
+        ctx.fillRect(500, 570, 200, 60);  // Battery Body (500 to 700)
         
+        // Battery Terminals
+        ctx.fillStyle = '#ef4444'; // Positive (Right)
+        ctx.fillRect(680, 590, 15, 20);
+        ctx.fillStyle = '#cbd5e1'; // Negative (Left)
+        ctx.fillRect(505, 590, 15, 20);
+        
+        // Battery Labels
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px Inter';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('BATTERY', 345, 570);
+        ctx.fillText('BATTERY', 600, 600);
         ctx.font = 'bold 24px Inter';
-        ctx.fillText('+', 412, 575);
-        ctx.fillText('-', 278, 575);
+        ctx.fillText('+', 670, 600);
+        ctx.fillText('-', 530, 600);
 
-        // Draw Light Bulb - on the right side - better positioned
-        ctx.fillStyle = '#fbbf24'; // amber-400 (glowing)
+        // Draw Light Bulb (On Right Wire)
+        const bulbX = 900;
+        const bulbY = 450;
+        
+        ctx.fillStyle = '#fbbf24'; // amber-400
         ctx.beginPath();
-        ctx.arc(880, 410, 40, 0, Math.PI * 2);  // larger bulb - moved right
+        ctx.arc(bulbX, bulbY, 40, 0, Math.PI * 2);
         ctx.fill();
-        // Bulb glow
+        // Glow
         ctx.shadowColor = '#fbbf24';
         ctx.shadowBlur = 40;
         ctx.fill();
-        ctx.shadowBlur = 0; // reset
+        ctx.shadowBlur = 0;
         
-        // Bulb base
+        // Bulb Base
         ctx.fillStyle = '#64748b';
-        ctx.fillRect(865, 450, 30, 25);
-        // Bulb filament
+        ctx.fillRect(bulbX - 15, bulbY + 35, 30, 25);
+        
+        // Filament
         ctx.strokeStyle = '#fcd34d';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(870, 450);
-        ctx.lineTo(875, 430);
-        ctx.lineTo(885, 430);
-        ctx.lineTo(890, 450);
+        ctx.moveTo(bulbX - 10, bulbY + 35);
+        ctx.lineTo(bulbX - 5, bulbY + 10);
+        ctx.lineTo(bulbX + 5, bulbY + 10);
+        ctx.lineTo(bulbX + 10, bulbY + 35);
         ctx.stroke();
 
-        // Draw Metal Background - larger and centered
-        const metalBgColor = isLight ? '#e2e8f0' : '#0f172a'; // lighter slate for light mode
+        // Draw Metal Background
+        const metalBgColor = isLight ? '#e2e8f0' : '#0f172a';
         ctx.fillStyle = metalBgColor;
         ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
         ctx.strokeStyle = isLight ? '#cbd5e1' : '#334155';
@@ -612,8 +616,8 @@ export default function MetalSimulation({
         // Label
         ctx.fillStyle = isLight ? '#475569' : '#64748b';
         ctx.font = '14px Inter';
-        ctx.textAlign = 'left';
-        ctx.fillText('METAL WIRE / MATERIAL', bounds.x + 15, bounds.y - 12);
+        ctx.textAlign = 'center';
+        ctx.fillText('METAL SAMPLE', 600, 160);
       }
 
       // Draw Cations
