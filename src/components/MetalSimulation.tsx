@@ -419,12 +419,26 @@ export default function MetalSimulation({
           
           if (e.state === 'wire') {
              // Move along wire
-             e.wireProgress! += 4 * dt; // wire speed
-             if (e.wireProgress! >= 1190) {
+             // Speed depends on voltage (min speed 2, max speed 8)
+             const wireSpeed = 2 + (voltage / 100) * 6;
+             e.wireProgress! += wireSpeed * dt; 
+             
+             // Calculate total path length dynamically based on exit/entry points
+             // Path segments: 
+             // 1. Metal to Right Corner: 230
+             // 2. Down to Bottom: (600 - exitY)
+             // 3. Right to Battery: 200
+             // 4. Through Battery: 200
+             // 5. Left from Battery: 200
+             // 6. Up to Top: (600 - entryY)
+             // 7. Right to Metal: 230
+             const totalPathLength = 230 + (600 - e.exitY!) + 200 + 200 + 200 + (600 - e.entryY!) + 230;
+
+             if (e.wireProgress! >= totalPathLength) {
                 e.state = 'metal';
-                e.x = 600;
+                e.x = 530; // Enter at left edge
                 e.y = e.entryY!;
-                e.vx = 2; // initial velocity entering metal
+                e.vx = 2 + (voltage / 50); // Initial velocity based on voltage
                 e.vy = (Math.random() - 0.5) * 2;
              } else {
                 const pos = getWirePos(e.wireProgress!, e.exitY!, e.entryY!);
@@ -537,6 +551,8 @@ export default function MetalSimulation({
         // Draw wires - Circuit Loop
         ctx.strokeStyle = '#94a3b8'; // slate-400
         ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
         
         // Right Wire Path (Metal -> Bulb -> Battery)
@@ -552,14 +568,21 @@ export default function MetalSimulation({
         ctx.lineTo(530, 300); // Metal Left Center
         ctx.stroke();
 
-        // Draw Electrodes
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(526, 180, 8, 240);  // Left Electrode (x=530-4)
-        ctx.fillRect(666, 180, 8, 240);  // Right Electrode (x=670-4)
+        // Draw Bus Bars (Vertical connectors at metal interface)
+        ctx.fillStyle = '#64748b'; // slate-500
+        // Left Bus Bar
+        ctx.fillRect(520, 180, 10, 240);
+        // Right Bus Bar
+        ctx.fillRect(670, 180, 10, 240);
+
+        // Draw Electrodes (inside the metal area)
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.3)'; // faint slate
+        ctx.fillRect(530, 180, 4, 240);  // Left inner contact
+        ctx.fillRect(666, 180, 4, 240);  // Right inner contact
 
         // Draw Battery
         ctx.fillStyle = '#334155';
-        ctx.fillRect(500, 570, 200, 60);  // Battery Body (500 to 700)
+        ctx.fillRect(500, 570, 200, 60);  // Battery Body
         
         // Battery Terminals
         ctx.fillStyle = '#ef4444'; // Positive (Right)
@@ -581,22 +604,33 @@ export default function MetalSimulation({
         const bulbX = 900;
         const bulbY = 450;
         
-        ctx.fillStyle = '#fbbf24'; // amber-400
+        // Bulb brightness depends on voltage
+        const brightness = Math.max(0.2, voltage / 100);
+        const glowSize = 20 + (voltage / 100) * 40;
+        
+        // Bulb Glass
+        ctx.fillStyle = `rgba(251, 191, 36, ${brightness})`; // amber-400 with variable opacity
         ctx.beginPath();
         ctx.arc(bulbX, bulbY, 40, 0, Math.PI * 2);
         ctx.fill();
-        // Glow
-        ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 40;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        
+        // Bulb Glow (Outer)
+        if (voltage > 10) {
+          const gradient = ctx.createRadialGradient(bulbX, bulbY, 30, bulbX, bulbY, 30 + glowSize);
+          gradient.addColorStop(0, `rgba(251, 191, 36, ${brightness * 0.6})`);
+          gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(bulbX, bulbY, 30 + glowSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
         
         // Bulb Base
         ctx.fillStyle = '#64748b';
         ctx.fillRect(bulbX - 15, bulbY + 35, 30, 25);
         
-        // Filament
-        ctx.strokeStyle = '#fcd34d';
+        // Filament (Brightens with voltage)
+        ctx.strokeStyle = voltage > 20 ? '#fff' : '#fcd34d';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(bulbX - 10, bulbY + 35);
