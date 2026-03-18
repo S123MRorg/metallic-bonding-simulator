@@ -425,19 +425,16 @@ export default function MetalSimulation({
             currentSpeedMult = dt * (1 + nearestTemp * 2);
           }
 
-          if (mode === 'electrical' || mode === 'circuit') {
+          if (mode === 'electrical') {
             const voltageMultiplier = voltage / 50; // 0-2 range
             e.vx += 0.5 * dt * voltageMultiplier;
             e.vx += (Math.random() - 0.5) * 1.5 * dt; 
             e.vy += (Math.random() - 0.5) * 1.5 * dt; 
             
-            const currentSpeed = Math.hypot(e.vx, e.vy);
-            const maxSpeed = 3 + 5 * voltageMultiplier;
-            if (currentSpeed > maxSpeed) {
-              e.vx = (e.vx / currentSpeed) * maxSpeed;
-              e.vy = (e.vy / currentSpeed) * maxSpeed;
-            }
-          } else {
+            // Exponential decay for gradual slowdown
+            e.vx *= Math.pow(0.9, dt);
+            e.vy *= Math.pow(0.9, dt);
+          } else if (mode === 'circuit') {
             e.vx += (Math.random() - 0.5) * 1.5 * dt;
             e.vy += (Math.random() - 0.5) * 1.5 * dt;
             
