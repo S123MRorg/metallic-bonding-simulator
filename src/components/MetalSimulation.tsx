@@ -3,12 +3,6 @@ import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export type SimulationMode = 'normal' | 'malleable' | 'electrical' | 'heat' | 'circuit';
 
-interface CoreElectron {
-  angle: number;
-  orbitRadius: number;
-  angularVelocity: number;
-}
-
 interface Cation {
   id: number;
   baseX: number;
@@ -21,7 +15,9 @@ interface Cation {
   col: number;
   temp: number;
   isAlloyB: boolean; 
-  coreElectrons: CoreElectron[]; // Bound to the nucleus
+  alloyThreshold: number; // 0-100 value determining at what mix % this becomes Metal B
+  seedX: number; // Random value between -0.5 and 0.5 for lattice distortion
+  seedY: number; // Random value between -0.5 and 0.5 for lattice distortion
 }
 
 interface Electron {
@@ -62,17 +58,12 @@ const ELECTRON_RADIUS = 4;
 const ROWS = 5;
 const COLS = 8;
 
-// Scientific proportion scaling (e.g., representing Copper Z=29)
-// Scaled 1:4 to maintain performance while preserving mathematical ratios
-// 1 valence electron : 7 core electrons (representing the 28 bound electrons)
-const DELOCALIZED_ELECTRONS_PER_CATION = 1;
-const CORE_ELECTRONS_PER_CATION = 7;
+const DELOCALIZED_ELECTRONS_PER_CATION = 2; // Increased to compensate for removal of core electrons, forming a denser "sea"
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-// Bounding box logic to guarantee scaling constraints (60-70% volume utilization in circuit mode)
 function getSimulationBounds(mode: SimulationMode) {
   const isCircuit = mode === 'circuit';
   
@@ -97,17 +88,16 @@ function getSimulationBounds(mode: SimulationMode) {
   return { x: 0, y: 0, w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
 }
 
-// Visual mapping strictly adhering to the requirements
-function getCoreElectronColor(theme: 'light' | 'dark') {
-  return theme === 'dark' ? '#ffffff' : '#22c55e'; // White in dark mode, Green in light mode
-}
-
 function getDelocalizedElectronColor() {
   return '#38bdf8'; // Always Light Blue (Tailwind sky-400)
 }
 
 function getDelocalizedElectronGlowColor() {
   return 'rgba(56, 189, 248, 0.4)'; // Light Blue Glow
+}
+
+function getElectronTrailColor(theme: 'light' | 'dark') {
+  return theme === 'dark' ? 'rgba(186, 230, 253, 0.3)' : 'rgba(56, 189, 248, 0.3)';
 }
 
 function spawnMetalElectron(bounds: { x: number; y: number; w: number; h: number }, cations: Cation[]) {
@@ -158,7 +148,6 @@ export default function MetalSimulation({
   const camRef = useRef({ x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, zoom: 1 });
   const electronTrailsRef = useRef<{x: number, y: number}[][]>([]);
   const lastCrystalStructureRef = useRef<string>('');
-  const animationProgressRef = useRef<number>(1); 
   
   const dragState = useRef({
     isDragging: false,
@@ -171,7 +160,7 @@ export default function MetalSimulation({
     frameCount: 0
   });
 
-  // Physics Initialization
+  // Initialization
   useEffect(() => {
     const isCircuit = mode === 'circuit';
     const layoutType = isCircuit ? 'circuit' : (mode === 'malleable' ? 'malleable' : 'normal');
@@ -180,7 +169,6 @@ export default function MetalSimulation({
       lastLayoutRef.current = layoutType;
       const bounds = getSimulationBounds(mode);
       
-      // Determine optimal grid density based on sample volume
       const rows = isCircuit ? 4 : ROWS;
       const cols = isCircuit ? 9 : COLS;
       const spacingX = bounds.w / (cols + 1);
@@ -192,16 +180,6 @@ export default function MetalSimulation({
         for (let c = 0; c < cols; c++) {
           const baseX = bounds.x + (c + 1) * spacingX;
           const baseY = bounds.y + (r + 1) * spacingY;
-          
-          // Generate Core Electrons bound to this specific nucleus
-          const coreElectrons: CoreElectron[] = [];
-          for (let ce = 0; ce < CORE_ELECTRONS_PER_CATION; ce++) {
-             coreElectrons.push({
-               angle: Math.random() * Math.PI * 2,
-               orbitRadius: (CATION_RADIUS * 0.3) + Math.random() * (CATION_RADIUS * 0.5),
-               angularVelocity: (Math.random() - 0.5) * 10 + 2
-             });
-          }
 
           cations.push({
             id: id++,
@@ -215,19 +193,13 @@ export default function MetalSimulation({
             col: c,
             temp: 0,
             isAlloyB: false,
-            coreElectrons
+            alloyThreshold: Math.random() * 100, // Fixed random value for smooth slider transition
+            seedX: Math.random() - 0.5,
+            seedY: Math.random() - 0.5,
           });
         }
       }
       cationsRef.current = cations;
-
-      if (alloyMix > 0) {
-        const numAlloyB = Math.floor(cations.length * (alloyMix / 100));
-        const shuffledIndices = [...Array(cations.length).keys()].sort(() => Math.random() - 0.5);
-        for (let i = 0; i < numAlloyB; i++) {
-          cationsRef.current[shuffledIndices[i]].isAlloyB = true;
-        }
-      }
 
       // Generate Delocalized Electron Gas
       const electrons: Electron[] = [];
@@ -238,7 +210,7 @@ export default function MetalSimulation({
 
       for (let i = 0; i < metalElectronCount; i++) {
         const pos = spawnMetalElectron(bounds, cations);
-        const vFermi = 200; // High baseline Fermi velocity 
+        const vFermi = 200; 
         const angle = Math.random() * Math.PI * 2;
         electrons.push({
           x: pos.x,
@@ -252,9 +224,9 @@ export default function MetalSimulation({
       }
       electronsRef.current = electrons;
     }
-  }, [mode, alloyMix]);
+  }, [mode]);
 
-  // Crystal Structure Transitions
+  // Crystal Structure & Smooth Alloy Transitions
   useEffect(() => {
     if (cationsRef.current.length === 0) return;
     
@@ -265,41 +237,39 @@ export default function MetalSimulation({
     
     const spacingX = bounds.w / (cols + 1);
     const spacingY = bounds.h / (rows + 1);
+    const maxDistortion = Math.min(spacingX, spacingY) * 0.6; // Allow up to 60% displacement offset 
     
     if (lastCrystalStructureRef.current !== crystalStructure) {
       lastCrystalStructureRef.current = crystalStructure;
-      animationProgressRef.current = 0; 
     }
     
     cationsRef.current.forEach(c => {
-      const r = c.row;
-      const col = c.col;
-      
+      // 1. Determine Identity based on slider
+      c.isAlloyB = c.alloyThreshold < alloyMix;
+
+      // 2. Base Ideal Crystal Coordinates
+      let perfectX = bounds.x + (c.col + 1) * spacingX;
+      let perfectY = bounds.y + (c.row + 1) * spacingY;
+
       if (crystalStructure === 'hexagonal') {
-        const offset = r % 2 === 1 ? spacingX / 2 : 0;
-        c.targetX = bounds.x + (col + 1) * spacingX + offset;
-        c.targetY = bounds.y + (r + 1) * spacingY * 0.866; 
+        const offset = c.row % 2 === 1 ? spacingX / 2 : 0;
+        perfectX += offset;
+        perfectY = bounds.y + (c.row + 1) * spacingY * 0.866; 
       } else if (crystalStructure === 'fcc') {
-        const stagger = (r % 2) * (spacingX * 0.25);
-        const verticalStagger = (col % 2) * (spacingY * 0.25);
-        c.targetX = bounds.x + (col + 1) * spacingX + stagger;
-        c.targetY = bounds.y + (r + 1) * spacingY + verticalStagger;
-      } else {
-        c.targetX = bounds.x + (col + 1) * spacingX;
-        c.targetY = bounds.y + (r + 1) * spacingY;
+        const stagger = (c.row % 2) * (spacingX * 0.25);
+        const verticalStagger = (c.col % 2) * (spacingY * 0.25);
+        perfectX += stagger;
+        perfectY += verticalStagger;
       }
+
+      // 3. Apply Lattice Distortion based on Alloy Mix
+      // At 0% (pure metal), distortionAmount is 0. 
+      // At higher %, atoms push and pull against each other out of alignment.
+      const distortionAmount = (alloyMix / 100) * maxDistortion;
+      
+      c.targetX = perfectX + c.seedX * distortionAmount;
+      c.targetY = perfectY + c.seedY * distortionAmount;
     });
-    
-    if (alloyMix > 0) {
-      const numAlloyB = Math.floor(cationsRef.current.length * (alloyMix / 100));
-      cationsRef.current.forEach(c => c.isAlloyB = false);
-      const shuffledIndices = [...Array(cationsRef.current.length).keys()].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < numAlloyB; i++) {
-        cationsRef.current[shuffledIndices[i]].isAlloyB = true;
-      }
-    } else {
-      cationsRef.current.forEach(c => c.isAlloyB = false);
-    }
   }, [crystalStructure, mode, alloyMix]);
 
   // Recording State Handlers
@@ -393,21 +363,21 @@ export default function MetalSimulation({
       camRef.current.zoom += (targetZoom - camRef.current.zoom) * 0.05;
 
       // Substitutional Solid Solution Strengthening Logic
-      // Radius mismatch increases layer friction
-      const alloyFrictionFactor = 1 - (alloyMix / 100) * 0.50; // up to 50% slowdown
+      const alloyFrictionFactor = 1 - (alloyMix / 100) * 0.60; // Up to 60% mechanical slow-down due to internal distortion
 
       if (mode === 'malleable' && autoMalleable) {
         autoMalleableTime.current += 0.02 * Math.max(0.5, Math.min(autoDemoSpeed, 5)) * alloyFrictionFactor;
         const shift = Math.sin(autoMalleableTime.current) * 60;
         
         cations.forEach(c => {
-          const originalBaseX = (c.col + 1) * (bounds.w / (COLS + 1));
+          // Temporarily override targetX for demonstration
+          const currentIdealX = c.targetX; 
           if (c.row <= 1) {
-            c.baseX = originalBaseX + shift;
+            c.baseX = currentIdealX + shift;
           } else if (c.row === 2) {
-            c.baseX = originalBaseX + shift * 0.5;
+            c.baseX = currentIdealX + shift * 0.5;
           } else {
-            c.baseX = originalBaseX;
+            c.baseX = currentIdealX;
           }
         });
       }
@@ -427,7 +397,9 @@ export default function MetalSimulation({
 
       cations.forEach(c => {
         const lerpSpeed = 0.08;
-        c.baseX += (c.targetX - c.baseX) * lerpSpeed;
+        if (!autoMalleable || mode !== 'malleable') {
+           c.baseX += (c.targetX - c.baseX) * lerpSpeed;
+        }
         c.baseY += (c.targetY - c.baseY) * lerpSpeed;
         
         const localTemp = mode === 'heat' ? c.temp : globalBaseTemp;
@@ -436,11 +408,6 @@ export default function MetalSimulation({
         // Cation Vibration
         c.x = c.baseX + (Math.random() - 0.5) * amplitude * Math.min(safeDelta * 10, 5);
         c.y = c.baseY + (Math.random() - 0.5) * amplitude * Math.min(safeDelta * 10, 5);
-        
-        // Update Core Electrons
-        c.coreElectrons.forEach(ce => {
-            ce.angle += ce.angularVelocity * dt;
-        });
 
         if (mode === 'heat') {
           const t = heatTimeRef.current;
@@ -536,33 +503,30 @@ export default function MetalSimulation({
         const wireLeftX = circuitMarginX;
         const wireRightX = CANVAS_WIDTH - circuitMarginX;
 
-        // Current Density Field Gradient
-        const currentActiveColor = isLight ? 'rgba(56, 189, 248, 0.9)' : 'rgba(125, 211, 252, 0.9)'; // Sky blue current line
+        const currentPulseRate = currentMagnitude * 30;
+        const dashOffset = -(time / 1000) * currentPulseRate;
+        const currentActiveColor = isLight ? 'rgba(56, 189, 248, 0.9)' : 'rgba(125, 211, 252, 0.9)'; 
         const wireColor = isLight ? '#cbd5e1' : '#475569';
 
-        // Draw solid wire casing
         ctx.strokeStyle = wireColor; 
         ctx.lineWidth = 14;
         ctx.lineJoin = 'round';
         ctx.beginPath();
         
-        // Right wire path
         ctx.moveTo(bounds.x + bounds.w, wireTopY);
         ctx.lineTo(wireRightX, wireTopY);
         ctx.lineTo(wireRightX, wireBottomY);
         ctx.lineTo(CANVAS_WIDTH / 2 + 50, wireBottomY);
         
-        // Left wire path
         ctx.moveTo(CANVAS_WIDTH / 2 - 50, wireBottomY);
         ctx.lineTo(wireLeftX, wireBottomY);
         ctx.lineTo(wireLeftX, wireTopY);
         ctx.lineTo(bounds.x, wireTopY);
         ctx.stroke();
 
-        // Draw Current Vector Field Overlay (Glowing Solid Line indicating flow strength)
         if (voltage > 0) {
             ctx.strokeStyle = currentActiveColor;
-            ctx.lineWidth = 4 + (currentMagnitude * 1.5); // Thickness indicates strength
+            ctx.lineWidth = 4 + (currentMagnitude * 1.5); 
             ctx.lineJoin = 'round';
             ctx.shadowColor = getDelocalizedElectronColor();
             ctx.shadowBlur = 10 + currentMagnitude * 20;
@@ -581,15 +545,13 @@ export default function MetalSimulation({
             ctx.lineTo(bounds.x, wireTopY);
             ctx.stroke();
             
-            ctx.shadowBlur = 0; // Reset
+            ctx.shadowBlur = 0; 
         }
 
-        // Electrodes
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(bounds.x - 4, bounds.y, 8, bounds.h);
         ctx.fillRect(bounds.x + bounds.w - 4, bounds.y, 8, bounds.h);
 
-        // Battery
         ctx.fillStyle = '#334155';
         ctx.fillRect(CANVAS_WIDTH / 2 - 50, wireBottomY - 20, 100, 40); 
         ctx.fillStyle = '#ef4444'; 
@@ -606,7 +568,6 @@ export default function MetalSimulation({
         ctx.fillText('+', CANVAS_WIDTH / 2 + 40, wireBottomY);
         ctx.fillText('-', CANVAS_WIDTH / 2 - 40, wireBottomY);
 
-        // Light Bulb
         const bulbIntensity = Math.min(1, currentMagnitude / 3.5); 
         ctx.fillStyle = `rgba(251, 191, 36, ${0.1 + bulbIntensity * 0.9})`; 
         ctx.beginPath();
@@ -629,16 +590,13 @@ export default function MetalSimulation({
       ctx.lineWidth = 2;
       ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
 
-      // Draw Cations and Core Electrons
-      const coreFill = getCoreElectronColor(theme);
-
+      // Draw Cations
       cations.forEach(c => {
         let cationRadius = CATION_RADIUS;
         let fillColor = '#ef4444'; 
         let strokeColor = '#991b1b';
         let labelText = '+';
         
-        // Substitutional Alloy logic (15% radius variance)
         if (c.isAlloyB) {
           cationRadius = CATION_RADIUS * 1.15; 
           if (c.temp > 0.01) {
@@ -671,16 +629,6 @@ export default function MetalSimulation({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(labelText, c.x, c.y);
-
-        // Core Electrons
-        c.coreElectrons.forEach(ce => {
-            const cx = c.x + Math.cos(ce.angle) * ce.orbitRadius;
-            const cy = c.y + Math.sin(ce.angle) * ce.orbitRadius;
-            ctx.beginPath();
-            ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-            ctx.fillStyle = coreFill;
-            ctx.fill();
-        });
       });
 
       // Draw Delocalized Electron Trails
@@ -732,7 +680,7 @@ export default function MetalSimulation({
         ctx.arc(e.x, e.y, ELECTRON_RADIUS, 0, Math.PI * 2);
         ctx.fillStyle = delocFillColor;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(12, 74, 110, 0.9)'; // Dark slate border for contrast
+        ctx.strokeStyle = 'rgba(12, 74, 110, 0.9)'; 
         ctx.lineWidth = 1;
         ctx.stroke();
         
@@ -835,8 +783,7 @@ export default function MetalSimulation({
     
     const x = (e.clientX - rect.left) * scaleX;
     
-    // Substitutional Solid Solution Strengthening Logic
-    const alloyFrictionFactor = 1 - (alloyMix / 100) * 0.50; // Harder to move based on mismatch
+    const alloyFrictionFactor = 1 - (alloyMix / 100) * 0.60; 
     const dx = (x - dragState.current.dragStartX) * alloyFrictionFactor;
     dragState.current.dragStartX = x;
     
