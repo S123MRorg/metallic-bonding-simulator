@@ -615,7 +615,7 @@ export default function MetalSimulation({
         // Draw Bound Core Electrons (DISABLED for correct metallic bonding diagram)
         // In metallic bonding diagrams, cations should NOT show internal electrons
 
-        const showCoreElectrons = false; // set to true only if you explicitly want atomic model view
+        const showCoreElectrons = alloyMix < 5 && mode === 'normal';
 
         if (showCoreElectrons) {
           ctx.fillStyle = coreColor;
