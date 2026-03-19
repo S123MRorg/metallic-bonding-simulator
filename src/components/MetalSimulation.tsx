@@ -55,6 +55,7 @@ interface Props {
   onParticleSpawn?: () => void;
   onLayerSlide?: () => void;
   theme?: 'light' | 'dark';
+  demonstrateMode?: boolean;
 }
 
 const CANVAS_WIDTH = 1200;
@@ -149,7 +150,8 @@ export default function MetalSimulation({
   singleLayerMode = false,
   onParticleSpawn,
   onLayerSlide,
-  theme = 'dark'
+  theme = 'dark',
+  demonstrateMode = false
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
@@ -172,6 +174,10 @@ export default function MetalSimulation({
     encoder: null as any,
     frameCount: 0
   });
+  
+  // Animated electron size for demonstrate mode transitions
+  const electronSizeRef = useRef(ELECTRON_RADIUS);
+  const lastDemonstrateModeRef = useRef(demonstrateMode);
 
   // Initialization
   useEffect(() => {
@@ -291,6 +297,13 @@ export default function MetalSimulation({
     });
   }, [crystalStructure, mode, alloyMix]);
 
+  // Handle demonstrate mode electron size animation
+  useEffect(() => {
+    if (lastDemonstrateModeRef.current !== demonstrateMode) {
+      lastDemonstrateModeRef.current = demonstrateMode;
+    }
+  }, [demonstrateMode]);
+
   // Main Simulation Loop
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -304,6 +317,11 @@ export default function MetalSimulation({
       const deltaSec = (time - lastTime) / 1000;
       lastTime = time;
       const safeDelta = isNaN(deltaSec) ? 0.016 : Math.min(deltaSec, 0.1);
+
+      // Smooth electron size transition for demonstrate mode
+      const targetElectronSize = demonstrateMode ? ELECTRON_RADIUS * 2.5 : ELECTRON_RADIUS;
+      const sizeTransitionSpeed = 0.08;
+      electronSizeRef.current += (targetElectronSize - electronSizeRef.current) * sizeTransitionSpeed;
 
       const cations = cationsRef.current;
       const electrons = electronsRef.current;
@@ -409,9 +427,12 @@ export default function MetalSimulation({
         const tau = baseTau / (1 + localTemp * 5); 
         const collisionProb = 1 - Math.exp(-dt / tau);
 
+        // Apply speed factor for demonstrate mode (smoother/slower motion)
+        const speedFactor = demonstrateMode ? 0.4 : 1;
+        
         // Velocity Verlet Integration
-        e.x += e.vx * dt + 0.5 * e.ax * dt * dt;
-        e.y += e.vy * dt + 0.5 * e.ay * dt * dt;
+        e.x += e.vx * dt * speedFactor + 0.5 * e.ax * dt * dt;
+        e.y += e.vy * dt * speedFactor + 0.5 * e.ay * dt * dt;
 
         const newAx = eFieldForceX;
         const newAy = 0;
@@ -425,8 +446,15 @@ export default function MetalSimulation({
         // Electron-Lattice Scattering
         if (Math.random() < collisionProb) {
           const vFermi = 200; 
-          const vThermal = vFermi + localTemp * 400; 
-          const angle = Math.random() * Math.PI * 2;
+          // In demonstrate mode, use smoother velocity and don't bounce off cations
+          const vThermal = demonstrateMode 
+            ? (vFermi + localTemp * 400) * 0.5  // Slower thermal velocity
+            : vFermi + localTemp * 400;
+          
+          // In demonstrate mode, maintain more consistent direction (less chaotic scattering)
+          const angle = demonstrateMode
+            ? (Math.random() - 0.5) * Math.PI * 0.5 + Math.atan2(e.vy, e.vx)  // Smaller angle change
+            : Math.random() * Math.PI * 2;
           
           e.vx = Math.cos(angle) * vThermal;
           e.vy = Math.sin(angle) * vThermal;
@@ -661,21 +689,23 @@ export default function MetalSimulation({
       // Draw Delocalized Electrons (Electron Gas)
       const delocFillColor = getDelocalizedElectronColor();
       const delocGlowColor = getDelocalizedElectronGlowColor();
+      const currentElectronSize = electronSizeRef.current;
 
       electrons.forEach((e) => {
         ctx.save();
+        // In demonstrate mode, use softer glow
         ctx.shadowColor = delocGlowColor;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = demonstrateMode ? 20 : 12;
 
         // Inner Glow
         ctx.beginPath();
         ctx.fillStyle = delocGlowColor;
-        ctx.arc(e.x, e.y, ELECTRON_RADIUS + 4, 0, Math.PI * 2);
+        ctx.arc(e.x, e.y, currentElectronSize + 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Core Body
         ctx.beginPath();
-        ctx.arc(e.x, e.y, ELECTRON_RADIUS, 0, Math.PI * 2);
+        ctx.arc(e.x, e.y, currentElectronSize, 0, Math.PI * 2);
         ctx.fillStyle = delocFillColor;
         ctx.fill();
         
@@ -714,7 +744,7 @@ export default function MetalSimulation({
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [mode, isRecording, animationSpeed, autoMalleable, autoDemoSpeed, singleLayerMode, onRecordingComplete, onRecordingProgress, onLayerSlide, temperature, voltage, showTrails, particleSpawner, crystalStructure, alloyMix, theme]);
+  }, [mode, isRecording, animationSpeed, autoMalleable, autoDemoSpeed, singleLayerMode, onRecordingComplete, onRecordingProgress, onLayerSlide, temperature, voltage, showTrails, particleSpawner, crystalStructure, alloyMix, theme, demonstrateMode]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (mode !== 'malleable' || autoMalleable) return;

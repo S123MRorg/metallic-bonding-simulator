@@ -434,6 +434,7 @@ export default function App() {
   const [crystalStructure, setCrystalStructure] = useState<'square' | 'hexagonal' | 'fcc'>('square');
   const [alloyMix, setAlloyMix] = useState(0); // 0-100 percentage
   const [singleLayerMode, setSingleLayerMode] = useState(false); // Toggle for malleability
+  const [demonstrateMode, setDemonstrateMode] = useState(false); // Toggle for demonstration mode
   const [isFullscreen, setIsFullscreen] = useState(false);
   const simulationContainerRef = useRef<HTMLDivElement>(null);
 
@@ -797,7 +798,29 @@ export default function App() {
           {/* Controls Sidebar - Fixed on desktop */}
           <div className="lg:w-80 lg:flex-shrink-0 space-y-6 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
           <div className={`${bgCard} border ${borderColor}/50 rounded-2xl p-6`}>
-            <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider mb-4`}>Simulation Mode</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-sm font-semibold ${textSecondary} uppercase tracking-wider`}>Simulation Mode</h2>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${textSecondary}`}>Demonstrate</span>
+                <div className="group relative">
+                  <button
+                    onClick={() => setDemonstrateMode(!demonstrateMode)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      demonstrateMode ? 'bg-amber-500' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        demonstrateMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <div className={`absolute right-0 top-full mt-2 w-56 p-3 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
+                    Makes delocalized electrons larger, smoother, and slower for better visual demonstration.
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="space-y-3">
               <button
                 onClick={() => setMode('normal')}
@@ -1321,6 +1344,7 @@ export default function App() {
               onParticleSpawn={() => trackFeature('electron_add')}
               onLayerSlide={() => trackFeature('layer_slide')}
               theme={theme}
+              demonstrateMode={demonstrateMode}
             />
             </div>
             
@@ -1339,12 +1363,29 @@ export default function App() {
                 <span className={textSecondary}>Metal B (Alloy)</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full bg-blue-400 flex items-center justify-center`}>
-                  <span className="text-[8px] font-bold text-white">-</span>
+                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${isDark ? 'bg-white border border-slate-400' : 'bg-green-500 border border-green-600'}`}>
+                  <span className={`text-[8px] font-bold ${isDark ? 'text-slate-900' : 'text-white'}`}>-</span>
                 </div>
-                <span className={textSecondary}>Delocalized Electron</span>
+                <span className={textSecondary}>Delocalized Electron*</span>
               </div>
             </div>
+            
+            {/* Demonstration Mode Disclaimer - Only shows when demonstrate mode is active */}
+            {demonstrateMode && (
+              <div className={`mt-4 w-full max-w-[800px] mx-auto px-4 py-3 ${isDark ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'} border rounded-xl animate-fade-in`}>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                  <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-amber-200' : 'text-amber-800'}`}>
+                      Illustration Note
+                    </p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                      Delocalized electrons are shown much larger and slower than in reality for demonstration purposes. In real metals, electrons move at ~1,000,000 m/s but are invisibly small. This visualization is simplified for educational clarity.*
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Description Box - Hidden in fullscreen mode */}
