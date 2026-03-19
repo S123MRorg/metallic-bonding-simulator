@@ -50,7 +50,7 @@ interface Props {
 
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 800;
-const MAX_RECORD_FRAMES = 480; // 240 frames at 30fps = 8 seconds.
+const MAX_RECORD_FRAMES = 480; 
 const CATION_RADIUS = 20;
 const ELECTRON_RADIUS = 5;
 const ROWS = 5;
@@ -58,6 +58,7 @@ const COLS = 8;
 const SPACING_X = CANVAS_WIDTH / (COLS + 1);
 const SPACING_Y = CANVAS_HEIGHT / (ROWS + 1);
 
+// Evenly spreads initial electrons along the length of the external circuit
 function getInitialWirePos(dist: number) {
   if (dist <= 140) return { x: 900 + dist, y: 350, targetIdx: 2 };
   dist -= 140;
@@ -70,7 +71,8 @@ function getInitialWirePos(dist: number) {
   if (dist <= 215) return { x: 515 - dist, y: 550, targetIdx: 6 };
   dist -= 215;
   if (dist <= 200) return { x: 300, y: 550 - dist, targetIdx: 7 };
-  return { x: 300, y: 350, targetIdx: 8 };
+  dist -= 200;
+  return { x: 300, y: 350 - Math.min(dist, 150), targetIdx: 8 };
 }
 
 export default function MetalSimulation({ 
@@ -115,6 +117,7 @@ export default function MetalSimulation({
     frameCount: 0
   });
 
+  // Initialization Hook
   useEffect(() => {
     const isCircuit = mode === 'circuit';
     const layoutType = isCircuit ? 'circuit' : (mode === 'malleable' ? 'malleable' : 'normal');
@@ -175,20 +178,21 @@ export default function MetalSimulation({
       
       if (isCircuit) {
         for (let i = 0; i < 60; i++) {
-          const progress = Math.random() * 1280;
+          const progress = Math.random() * 1280; // Total length of the drawn external wire
           const pos = getInitialWirePos(progress);
           electrons.push({
             x: pos.x, y: pos.y, vx: 0, vy: 0, speedMultiplier: 1,
             state: 'wire',
             wireTargetIdx: pos.targetIdx,
-            wireTargetY: 200 + Math.random() * 300,
+            wireTargetY: bounds.y + Math.random() * bounds.h, // Initial randomized spreading target
           });
         }
       }
       electronsRef.current = electrons;
     }
-  }, [mode]);
+  }, [mode, alloyMix]);
 
+  // Crystal Structure Update
   useEffect(() => {
     if (cationsRef.current.length === 0) return;
     
@@ -224,19 +228,9 @@ export default function MetalSimulation({
         c.targetY = bounds.y + (r + 1) * spacingY;
       }
     });
-    
-    if (alloyMix > 0) {
-      const numAlloyB = Math.floor(cationsRef.current.length * (alloyMix / 100));
-      cationsRef.current.forEach(c => c.isAlloyB = false);
-      const shuffledIndices = [...Array(cationsRef.current.length).keys()].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < numAlloyB; i++) {
-        cationsRef.current[shuffledIndices[i]].isAlloyB = true;
-      }
-    } else {
-      cationsRef.current.forEach(c => c.isAlloyB = false);
-    }
-  }, [crystalStructure, mode, alloyMix]);
+  }, [crystalStructure, mode]);
 
+  // GIF Recording Status
   useEffect(() => {
     if (isRecording && !gifState.current.encoder) {
       gifState.current.encoder = GIFEncoder();
@@ -256,6 +250,7 @@ export default function MetalSimulation({
     }
   }, [isRecording, onRecordingComplete, onRecordingProgress, mode]);
 
+  // Render/Physics Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -369,23 +364,26 @@ export default function MetalSimulation({
         electrons.forEach(e => {
           let currentSpeedMult = dt;
           
+          // Wire routing physics 
           if (e.state === 'wire') {
              const voltageMultiplier = voltage / 100;
-             const wireSpeed = 20 + voltageMultiplier * 400; // Base speed + active speed based on voltage
+             const wireSpeed = 40 + voltageMultiplier * 400; // Scales perfectly with UI voltage slider
              let speed = wireSpeed * dt;
              
+             // Exact waypoint coordinates mapping the drawn wires
              const waypoints = [
                { x: e.x, y: e.y }, // 0
-               { x: 900, y: 350 }, // 1
-               { x: 1040, y: 350 }, // 2
-               { x: 1040, y: 550 }, // 3
-               { x: 765, y: 550 }, // 4
-               { x: 515, y: 550 }, // 5
-               { x: 300, y: 550 }, // 6
-               { x: 300, y: 350 }, // 7
-               { x: 300, y: e.wireTargetY! } // 8
+               { x: 900, y: 350 }, // 1 (Exit connection)
+               { x: 1040, y: 350 }, // 2 (Right Corner 1)
+               { x: 1040, y: 550 }, // 3 (Right Corner 2)
+               { x: 765, y: 550 }, // 4 (Battery +)
+               { x: 515, y: 550 }, // 5 (Battery -)
+               { x: 300, y: 550 }, // 6 (Left Corner)
+               { x: 300, y: 350 }, // 7 (Entry connection point)
+               { x: 300, y: e.wireTargetY! } // 8 (Spread out along entry edge before re-entering metal)
              ];
              
+             // Progress along the wire segments cleanly
              while (speed > 0 && e.wireTargetIdx! <= 8) {
                const target = waypoints[e.wireTargetIdx!];
                const dx = target.x - e.x;
@@ -404,10 +402,11 @@ export default function MetalSimulation({
                }
              }
              
+             // When spreading phase (WP 8) is complete, release back into the metal
              if (e.wireTargetIdx! > 8) {
                 e.state = 'metal';
-                e.vx = 2 + (voltage / 50); 
-                e.vy = (Math.random() - 0.5) * 2;
+                e.vx = 2 + (voltage / 20); // Give it a firm push into the metal
+                e.vy = (Math.random() - 0.5) * 4;
              }
              return; 
           }
@@ -425,18 +424,34 @@ export default function MetalSimulation({
             currentSpeedMult = dt * (1 + nearestTemp * 2);
           }
 
-          if (mode === 'electrical') {
-            const voltageMultiplier = voltage / 50; // 0-2 range
-            e.vx += 0.5 * dt * voltageMultiplier;
-            e.vx += (Math.random() - 0.5) * 1.5 * dt; 
-            e.vy += (Math.random() - 0.5) * 1.5 * dt; 
+          // Metal physics
+          if (mode === 'electrical' || mode === 'circuit') {
+            const voltageMultiplier = voltage / 50; 
             
-            // Exponential decay for gradual slowdown
-            e.vx *= Math.pow(0.9, dt);
-            e.vy *= Math.pow(0.9, dt);
-          } else if (mode === 'circuit') {
-            e.vx += (Math.random() - 0.5) * 1.5 * dt;
-            e.vy += (Math.random() - 0.5) * 1.5 * dt;
+            // Push electrons rightwards (voltage force)
+            e.vx += 8.0 * dt * voltageMultiplier; 
+            
+            // Random thermal movement inside the lattice
+            e.vx += (Math.random() - 0.5) * 15 * dt; 
+            e.vy += (Math.random() - 0.5) * 15 * dt; 
+            
+            // Simulating collisions with atoms to create a terminal drift velocity 
+            e.vx *= Math.pow(0.1, dt); 
+            e.vy *= Math.pow(0.1, dt);
+            
+            const currentSpeed = Math.hypot(e.vx, e.vy);
+            const maxSpeed = 2 + 6 * voltageMultiplier;
+            if (currentSpeed > maxSpeed) {
+              e.vx = (e.vx / currentSpeed) * maxSpeed;
+              e.vy = (e.vy / currentSpeed) * maxSpeed;
+            }
+          } else {
+            // Normal / Heat / Malleable 
+            e.vx += (Math.random() - 0.5) * 15 * dt;
+            e.vy += (Math.random() - 0.5) * 15 * dt;
+            
+            e.vx *= Math.pow(0.5, dt); 
+            e.vy *= Math.pow(0.5, dt);
             
             const currentSpeed = Math.hypot(e.vx, e.vy);
             const maxSpeed = 3;
@@ -449,23 +464,24 @@ export default function MetalSimulation({
           e.x += e.vx * currentSpeedMult;
           e.y += e.vy * currentSpeedMult;
 
+          // Screen & Metal boundaries
           if (mode === 'electrical') {
             if (e.x > bounds.x + bounds.w) e.x = bounds.x + (e.x % bounds.w);
             if (e.x < bounds.x) e.x = bounds.x + bounds.w + (e.x % bounds.w);
             if (e.y > bounds.y + bounds.h) { e.y = bounds.y + bounds.h; e.vy *= -1; }
             if (e.y < bounds.y) { e.y = bounds.y; e.vy *= -1; }
           } else if (mode === 'circuit') {
+            // Exit metal logic
             if (e.x >= bounds.x + bounds.w - 5) {
                e.state = 'wire';
-               e.wireTargetIdx = 1;
-               e.wireTargetY = 200 + Math.random() * 300; 
+               e.wireTargetIdx = 1; // Start path to Top Right WP
+               e.wireTargetY = bounds.y + Math.random() * bounds.h; // Prep spread point for its return later
                e.x = bounds.x + bounds.w; 
             }
+            // Bounce on left wall so they don't escape out backwards
             if (e.x < bounds.x) {
-               e.x = bounds.x;
-               e.vx = Math.abs(e.vx) * 0.5; // Slower initial velocity for smooth spread
-               e.vy = (Math.random() - 0.5) * 2; // Random vertical spread
-               e.state = 'metal';
+               e.x = bounds.x + 1;
+               e.vx = Math.abs(e.vx) + 0.5; // Force rightward bounce
             }
             if (e.y > bounds.y + bounds.h) { e.y = bounds.y + bounds.h; e.vy *= -1; }
             if (e.y < bounds.y) { e.y = bounds.y; e.vy *= -1; }
@@ -485,6 +501,7 @@ export default function MetalSimulation({
         remainingSpeed -= step;
       }
 
+      // Drawing Phase
       const isLight = theme === 'light';
       ctx.fillStyle = isLight ? '#f1f5f9' : '#1e293b'; 
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
