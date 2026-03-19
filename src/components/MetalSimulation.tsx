@@ -612,15 +612,21 @@ export default function MetalSimulation({
         ctx.textBaseline = 'middle';
         ctx.fillText(labelText, c.x, c.y);
 
-        // Draw Bound Core Electrons
-        ctx.fillStyle = coreColor;
-        c.coreElectrons.forEach(ce => {
-            const ex = c.x + Math.cos(ce.angle) * ce.orbitRadius;
-            const ey = c.y + Math.sin(ce.angle) * ce.orbitRadius;
-            ctx.beginPath();
-            ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-        });
+        // Draw Bound Core Electrons (DISABLED for correct metallic bonding diagram)
+        // In metallic bonding diagrams, cations should NOT show internal electrons
+
+        const showCoreElectrons = false; // set to true only if you explicitly want atomic model view
+
+        if (showCoreElectrons) {
+          ctx.fillStyle = coreColor;
+          c.coreElectrons.forEach(ce => {
+              const ex = c.x + Math.cos(ce.angle) * ce.orbitRadius;
+              const ey = c.y + Math.sin(ce.angle) * ce.orbitRadius;
+              ctx.beginPath();
+              ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+          });
+        }
       });
 
       // Draw Delocalized Electron Trails
