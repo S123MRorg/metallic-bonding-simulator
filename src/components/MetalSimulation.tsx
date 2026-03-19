@@ -92,6 +92,14 @@ function getElectronTrailColor(theme: 'light' | 'dark') {
   return theme === 'dark' ? 'rgba(255, 255, 255, 0.24)' : 'rgba(34, 197, 94, 0.24)';
 }
 
+function getElectronGlowColor(theme: 'light' | 'dark', state: Electron['state']) {
+  if (theme === 'dark') {
+    return state === 'wire' ? 'rgba(248, 250, 252, 0.35)' : 'rgba(255, 255, 255, 0.22)';
+  }
+
+  return state === 'wire' ? 'rgba(22, 163, 74, 0.32)' : 'rgba(34, 197, 94, 0.18)';
+}
+
 function spawnMetalElectron(bounds: { x: number; y: number; w: number; h: number }, cations: Cation[]) {
   if (cations.length === 0) {
     return {
@@ -462,20 +470,30 @@ export default function MetalSimulation({
           let currentSpeedMult = dt;
           
           if (e.state === 'wire') {
-             // Move along wire
-             e.wireProgress! += 4 * dt; // wire speed
-             if (e.wireProgress! >= 900) {
-                e.state = 'metal';
-                e.x = 150;
-                e.y = e.entryY!;
-                e.vx = 2; // initial velocity entering metal
-                e.vy = (Math.random() - 0.5) * 2;
-             } else {
-                const pos = getWirePos(e.wireProgress!, e.exitY!, e.entryY!);
-                e.x = pos.x;
-                e.y = pos.y;
-             }
-             return; // skip metal physics
+              // Move along the wire with smooth path-following and consistent flow speed
+              const voltageMultiplier = voltage / 50;
+              const wireSpeed = 2.6 + voltageMultiplier * 1.4;
+              const prevProgress = e.wireProgress!;
+              const nextProgress = prevProgress + wireSpeed * dt;
+
+              if (nextProgress >= WIRE_PATH_LENGTH) {
+                 const endPos = getWirePos(WIRE_PATH_LENGTH - 0.001, e.exitY!, e.entryY!);
+                 e.state = 'metal';
+                 e.wireProgress = 0;
+                 e.x = bounds.x + 8;
+                 e.y = clamp(e.entryY!, bounds.y + 8, bounds.y + bounds.h - 8);
+                 e.vx = 2.8 + voltageMultiplier * 1.8;
+                 e.vy = (endPos.y - e.y) * 0.02;
+              } else {
+                 const prevPos = getWirePos(prevProgress, e.exitY!, e.entryY!);
+                 const pos = getWirePos(nextProgress, e.exitY!, e.entryY!);
+                 e.wireProgress = nextProgress;
+                 e.x = pos.x;
+                 e.y = pos.y;
+                 e.vx = (pos.x - prevPos.x) / Math.max(dt, 0.016);
+                 e.vy = (pos.y - prevPos.y) / Math.max(dt, 0.016);
+              }
+              return; // skip metal physics
           }
 
           if (mode === 'heat') {
@@ -495,12 +513,15 @@ export default function MetalSimulation({
           if (mode === 'electrical' || mode === 'circuit') {
             // Apply electric field (force to the right) - voltage affects acceleration
             const voltageMultiplier = voltage / 50; // 0-2 range
-            e.vx += 0.5 * dt * voltageMultiplier;
-            if (e.vx > 8 * voltageMultiplier) e.vx = 8 * voltageMultiplier; // Terminal velocity
-            e.vy += (Math.random() - 0.5) * 1 * dt; // Some random vertical movement
+            const acceleration = mode === 'circuit' ? 0.42 : 0.5;
+            e.vx += acceleration * dt * voltageMultiplier;
+            const terminalVelocity = mode === 'circuit' ? 6.5 : 8 * voltageMultiplier;
+            if (e.vx > terminalVelocity) e.vx = terminalVelocity; // Terminal velocity
+            const verticalNoise = mode === 'circuit' ? 0.45 : 1;
+            e.vy += (Math.random() - 0.5) * verticalNoise * dt; // Some random vertical movement
             
             // Dampen vertical velocity
-            e.vy *= Math.pow(0.9, dt);
+            e.vy *= Math.pow(mode === 'circuit' ? 0.94 : 0.9, dt);
           } else {
             // Random walk
             e.vx += (Math.random() - 0.5) * 1.5 * dt;
@@ -531,6 +552,8 @@ export default function MetalSimulation({
                e.wireProgress = 0;
                e.exitY = e.y;
                e.entryY = bounds.y + Math.random() * bounds.h;
+               e.x = bounds.x + bounds.w - 2;
+               e.y = clamp(e.y, bounds.y + 8, bounds.y + bounds.h - 8);
             }
             if (e.x < bounds.x) { e.x = bounds.x; e.vx *= -1; }
             if (e.y > bounds.y + bounds.h) { e.y = bounds.y + bounds.h; e.vy *= -1; }
@@ -547,7 +570,7 @@ export default function MetalSimulation({
       // Step physics multiple times if animationSpeed is high to prevent tunneling
       let remainingSpeed = animationSpeed;
       while (remainingSpeed > 0) {
-        const step = Math.min(remainingSpeed, 2);
+        const step = Math.min(remainingSpeed, mode === 'circuit' ? 0.75 : 2);
         updatePhysics(step);
         remainingSpeed -= step;
       }
@@ -743,8 +766,17 @@ export default function MetalSimulation({
       
       // Draw electrons
       electrons.forEach((e, i) => {
+        ctx.save();
+        ctx.shadowColor = getElectronGlowColor(theme, e.state);
+        ctx.shadowBlur = e.state === 'wire' ? 14 : 10;
+
         ctx.beginPath();
         const electronRadius = e.state === 'wire' ? ELECTRON_RADIUS * 0.95 : ELECTRON_RADIUS;
+        ctx.fillStyle = getElectronGlowColor(theme, e.state);
+        ctx.arc(e.x, e.y, electronRadius + 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
         ctx.arc(e.x, e.y, electronRadius, 0, Math.PI * 2);
         ctx.fillStyle = getElectronFillColor(theme, e.state);
         ctx.fill();
@@ -757,6 +789,7 @@ export default function MetalSimulation({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('-', e.x, e.y);
+        ctx.restore();
       });
 
       ctx.restore();
