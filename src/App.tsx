@@ -435,6 +435,8 @@ export default function App() {
   const [alloyMix, setAlloyMix] = useState(0); // 0-100 percentage
   const [singleLayerMode, setSingleLayerMode] = useState(false); // Toggle for malleability
   const [demonstrateMode, setDemonstrateMode] = useState(false); // Toggle for demonstration mode
+  const [showCationElectrons, setShowCationElectrons] = useState(true); // Toggle to manually show/hide cation electrons
+  const [showIllustrationNotice, setShowIllustrationNotice] = useState(true); // Collapsible illustration notice state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const simulationContainerRef = useRef<HTMLDivElement>(null);
 
@@ -816,7 +818,7 @@ export default function App() {
                     />
                   </button>
                   <div className={`absolute right-0 top-full mt-2 w-56 p-3 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
-                    Makes delocalized electrons larger, smoother, and slower for better visual demonstration.
+                    Makes delocalized electrons larger and more visible for better visual demonstration.
                   </div>
                 </div>
               </div>
@@ -1133,6 +1135,34 @@ export default function App() {
                   </button>
                 </div>
 
+                {/* Show Cation Electrons Toggle */}
+                <div className={`py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                      <span className={`text-sm ${textSecondary}`}>Cation Electrons</span>
+                      <div className="group relative">
+                        <HelpCircle className={`w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-help`} />
+                        <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 ${isDark ? 'bg-slate-700' : 'bg-white'} ${isDark ? 'text-slate-200' : 'text-slate-700'} text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${isDark ? 'shadow-lg' : 'shadow-xl border border-slate-200'}`}>
+                          Show inner-shell electrons inside cations. Only visible in demonstrate mode. These are for illustration purposes only - in real metals, cations do not retain their electrons.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowCationElectrons(!showCationElectrons)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        showCationElectrons ? (isDark ? 'bg-cyan-500' : 'bg-cyan-500') : (isDark ? 'bg-slate-600' : 'bg-slate-300')
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          showCationElectrons ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Crystal Structure */}
                 <div className={`py-2 ${isDark ? 'border-t border-slate-700/50' : 'border-t border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
@@ -1345,6 +1375,7 @@ export default function App() {
               onLayerSlide={() => trackFeature('layer_slide')}
               theme={theme}
               demonstrateMode={demonstrateMode}
+              showCationElectrons={showCationElectrons}
             />
             </div>
             
@@ -1373,15 +1404,30 @@ export default function App() {
             {/* Demonstration Mode Disclaimer - Only shows when demonstrate mode is active */}
             {demonstrateMode && (
               <div className={`mt-4 w-full max-w-[800px] mx-auto px-4 py-3 ${isDark ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'} border rounded-xl animate-fade-in`}>
-                <div className="flex items-start gap-3">
+                <div 
+                  className="flex items-start gap-3 cursor-pointer"
+                  onClick={() => setShowIllustrationNotice(!showIllustrationNotice)}
+                >
                   <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
-                  <div>
-                    <p className={`text-sm font-medium ${isDark ? 'text-amber-200' : 'text-amber-800'}`}>
-                      Illustration Note
-                    </p>
-                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
-                      Delocalized electrons are shown much larger and slower than in reality for demonstration purposes. In real metals, electrons move at ~1,000,000 m/s but are invisibly small. This visualization is simplified for educational clarity.*
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm font-medium ${isDark ? 'text-amber-200' : 'text-amber-800'}`}>
+                        Illustration Note
+                      </p>
+                      <button className={`${isDark ? 'text-amber-400' : 'text-amber-600'} hover:opacity-80`}>
+                        {showIllustrationNotice ? '▲' : '▼'}
+                      </button>
+                    </div>
+                    {showIllustrationNotice && (
+                      <div className="animate-fade-in">
+                        <p className={`text-xs mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                          Delocalized electrons are shown much larger than in reality for demonstration purposes. In real metals, electrons move at ~1,000,000 m/s but are invisibly small. This visualization is simplified for educational clarity.*
+                        </p>
+                        <p className={`text-xs mt-2 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                          ⚠ The electrons shown inside cations are only for illustration purposes. In the sea of electrons model, metal atoms lose all valence electrons to become cations, so there are no electrons remaining inside the cations.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

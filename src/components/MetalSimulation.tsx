@@ -56,6 +56,7 @@ interface Props {
   onLayerSlide?: () => void;
   theme?: 'light' | 'dark';
   demonstrateMode?: boolean;
+  showCationElectrons?: boolean;
 }
 
 const CANVAS_WIDTH = 1200;
@@ -151,7 +152,8 @@ export default function MetalSimulation({
   onParticleSpawn,
   onLayerSlide,
   theme = 'dark',
-  demonstrateMode = false
+  demonstrateMode = false,
+  showCationElectrons = true
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cationsRef = useRef<Cation[]>([]);
@@ -427,8 +429,8 @@ export default function MetalSimulation({
         const tau = baseTau / (1 + localTemp * 5); 
         const collisionProb = 1 - Math.exp(-dt / tau);
 
-        // Apply speed factor for demonstrate mode (smoother/slower motion)
-        const speedFactor = demonstrateMode ? 0.4 : 1;
+        // Speed factor - always 1 now (removed demonstrate mode slowness)
+        const speedFactor = 1;
         
         // Velocity Verlet Integration
         e.x += e.vx * dt * speedFactor + 0.5 * e.ax * dt * dt;
@@ -446,15 +448,11 @@ export default function MetalSimulation({
         // Electron-Lattice Scattering
         if (Math.random() < collisionProb) {
           const vFermi = 200; 
-          // In demonstrate mode, use smoother velocity and don't bounce off cations
-          const vThermal = demonstrateMode 
-            ? (vFermi + localTemp * 400) * 0.5  // Slower thermal velocity
-            : vFermi + localTemp * 400;
+          // Use full thermal velocity always
+          const vThermal = vFermi + localTemp * 400;
           
-          // In demonstrate mode, maintain more consistent direction (less chaotic scattering)
-          const angle = demonstrateMode
-            ? (Math.random() - 0.5) * Math.PI * 0.5 + Math.atan2(e.vy, e.vx)  // Smaller angle change
-            : Math.random() * Math.PI * 2;
+          // Random direction for scattering
+          const angle = Math.random() * Math.PI * 2;
           
           e.vx = Math.cos(angle) * vThermal;
           e.vy = Math.sin(angle) * vThermal;
@@ -640,10 +638,8 @@ export default function MetalSimulation({
         ctx.textBaseline = 'middle';
         ctx.fillText(labelText, c.x, c.y);
 
-        // Draw Bound Core Electrons (DISABLED for correct metallic bonding diagram)
-        // In metallic bonding diagrams, cations should NOT show internal electrons
-
-        const showCoreElectrons = alloyMix < 5 && mode === 'normal';
+        // Draw Bound Core Electrons - only visible when demonstrate mode is on AND showCationElectrons is enabled
+        const showCoreElectrons = demonstrateMode && showCationElectrons && alloyMix < 5 && mode === 'normal';
 
         if (showCoreElectrons) {
           ctx.fillStyle = coreColor;
